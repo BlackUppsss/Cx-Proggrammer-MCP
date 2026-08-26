@@ -66,10 +66,10 @@ def build_section_penyiraman(p):
         ["LD 0.01", "ANDNOT H0.00", "SET H0.00"])
     add_rung(p, S, 3, "Toggle OFF: tekan 0.01 matikan mode otomatis",
         ["LD 0.01", "AND H0.00", "RSET H0.00"])
-    add_rung(p, S, 4, "Baca RTC: jam dari A352 high byte -> W10",
-        ["LD A200.12", "MOVB(082) A352 #1 W10"])
-    add_rung(p, S, 5, "Baca RTC: menit dari A351 high byte -> W11",
-        ["LD A200.12", "MOVB(082) A351 #1 W11"])
+    add_rung(p, S, 4, "Baca RTC: jam dari A352 low byte -> W10 (CP1E-NA)",
+        ["LD A200.11", "MOVB(082) A352 #0 W10"])
+    add_rung(p, S, 5, "Baca RTC: menit dari A351 high byte -> W11 (CP1E-NA)",
+        ["LD A200.11", "MOVB(082) A351 #1 W11"])
     add_rung(p, S, 6, "Reset one-shot saat menit bukan 0",
         ["LD<> W11 #0", "RSET W0.03", "RSET W0.04"])
     add_rung(p, S, 7, "Jadwal 1: jam=D0 menit=D1 mode ON belum siram -> trigger",

@@ -18,12 +18,26 @@ COUNTERS = {"CNT", "CNTR", "CNTX", "CNTRX"}
 MOVE_FAMILY = {
     "MOV", "MOVL", "MVN", "MVNL", "XFER", "BSET", "XCHG", "DIST", "COLL",
 }
+# MOVB/MOVD/MOVW: byte/digit/word move — src, bit-position/digit, dest
+# Dest is last operand, same convention as MOVE_FAMILY.
+BYTE_MOVE_FAMILY = {"MOVB", "MOVD", "MOVW"}
 MATH_DEST_LAST = {
     "ADD", "ADDL", "SUB", "SUBL", "MUL", "MULL", "DIV", "DIVL", "INC", "INCL",
     "DEC", "DECL", "NEG", "NEGL", "ANDW", "ORW", "XORW", "COM", "ASL", "ASR",
     "ROL", "ROR", "SLD", "SRD",
 }
 CONTROL_FLOW = {"JMP", "JME", "CJP", "CALL", "SBS", "RET", "IL", "ILC"}
+# Comparison instructions: all operands are reads, no writes.
+# CMP writes to condition flags only (not a data register).
+# LD=/AND=/OR= variants load/extend condition from comparison result.
+COMPARE_FAMILY = {
+    "CMP", "CMPL",
+    "LD=", "LD<>", "LD<", "LD<=", "LD>", "LD>=",
+    "AND=", "AND<>", "AND<", "AND<=", "AND>", "AND>=",
+    "OR=", "OR<>", "OR<", "OR<=", "OR>", "OR>=",
+}
+# BCD/BIN conversion: src → dest (dest is last operand)
+CONVERSION_FAMILY = {"BIN", "BCD", "BINS", "BCDS", "BINL", "BCDL"}
 
 # Deliberately permissive: Omron supports many memory areas and indirect/indexed forms.
 # The validator's goal is catching obvious malformed operands, not replacing CX-Programmer compile.
@@ -34,6 +48,8 @@ _ADDRESS_PATTERNS = [
     re.compile(r"^E\d+_\d+(?:\.\d+)?$", re.I),
     re.compile(r"^(?:IR|DR)\d+$", re.I),
     re.compile(r"^(?:TK|TR)\d+$", re.I),
+    # Auxiliary area: A200.11, A351, A352, etc. (RTC, error flags, system flags)
+    re.compile(r"^A\d{1,4}(?:\.\d{1,2})?$", re.I),
 ]
 _IMMEDIATE = re.compile(r"^(?:[#&][0-9A-F]+|[-+]?\d+(?:\.\d+)?)$", re.I)
 
@@ -70,7 +86,9 @@ def parse_instruction(line: str) -> dict[str, Any]:
     # Match compound network operators before generic one-word mnemonic parsing.
     m = re.match(r"^(AND\s+LD|OR\s+LD)(?:\((\d+)\))?(?:\s+(.*))?$", text, re.I)
     if not m:
-        m = re.match(r"^([A-Za-z@][A-Za-z0-9_@]*)(?:\((\d+)\))?(?:\s+(.*))?$", text)
+        # Allow comparison suffixes: LD>=, AND<>, OR<=, etc.
+        # Pattern: letter/@ start, then alphanumeric body, then optional <>= suffix.
+        m = re.match(r"^([A-Za-z@][A-Za-z0-9_@]*(?:[<>]=?|<>|=)?)(?:\((\d+)\))?(?:\s+(.*))?$", text)
     if not m:
         return {
             "raw": raw,
@@ -114,8 +132,14 @@ def instruction_family(mnemonic: str) -> str:
         return "control_flow"
     if m in MOVE_FAMILY:
         return "move"
+    if m in BYTE_MOVE_FAMILY:
+        return "byte_move"
     if m in MATH_DEST_LAST:
         return "math"
+    if m in COMPARE_FAMILY:
+        return "compare"
+    if m in CONVERSION_FAMILY:
+        return "conversion"
     return "other"
 
 
@@ -182,7 +206,21 @@ def analyze_rung(instructions: Iterable[str], symbols: dict[str, str] | None = N
             for op in ops[:-1]:
                 if operand_kind(op) != "immediate": _add_ref(reads, op)
             _add_ref(writes, ops[-1])
+        elif m in BYTE_MOVE_FAMILY and ops:
+            # MOVB src, bit-pos, dest — src and bit-pos are reads, dest is write
+            for op in ops[:-1]:
+                if operand_kind(op) != "immediate": _add_ref(reads, op)
+            _add_ref(writes, ops[-1])
         elif m in MATH_DEST_LAST and ops:
+            for op in ops[:-1]:
+                if operand_kind(op) != "immediate": _add_ref(reads, op)
+            _add_ref(writes, ops[-1])
+        elif m in COMPARE_FAMILY and ops:
+            # All operands are reads — no data register is written
+            for op in ops:
+                if operand_kind(op) != "immediate": _add_ref(reads, op)
+        elif m in CONVERSION_FAMILY and ops:
+            # BIN/BCD: src → dest (dest is last)
             for op in ops[:-1]:
                 if operand_kind(op) != "immediate": _add_ref(reads, op)
             _add_ref(writes, ops[-1])

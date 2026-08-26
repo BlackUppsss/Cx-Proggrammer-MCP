@@ -19,6 +19,7 @@ from .ladder import compile_rung, simulate_boolean_rung
 from .recipes import apply_exclusive_latch, exclusive_latch_plan
 from .session import ProjectSession
 from .templates import create_project as create_project_from_native_template, list_templates
+from .cpu_instructions import list_cpu_models, list_instructions_by_family
 
 logging.basicConfig(level=logging.INFO, stream=sys.stderr)
 logger = logging.getLogger(__name__)
@@ -493,6 +494,28 @@ def semantic_resource(project_id: str) -> str:
 @mcp.resource("cxprog://project/{project_id}/program/{program_name}")
 def program_resource(project_id: str, program_name: str) -> str:
     return json.dumps(get_program_context(project_id, program_name, include_empty_rungs=False, structured=True), ensure_ascii=False, indent=2)
+
+
+@mcp.tool(annotations=READ_ONLY)
+def list_cpu_instructions(cpu_model: str = "CP1E-NA") -> dict[str, Any]:
+    """List all known instructions for a given Omron CPU model, grouped by family.
+
+    Use this before writing ladder rungs to check correct mnemonic, arity,
+    and family for the target CPU.
+
+    Args:
+        cpu_model: e.g. "CP1E-NA", "CP1E-N", "CJ2M-CPU11". Case-insensitive.
+
+    Returns:
+        cpu_model, known (bool), known_models (list), families (dict by family name)
+    """
+    grouped = list_instructions_by_family(cpu_model)
+    return {
+        "cpu_model": cpu_model,
+        "known": bool(grouped),
+        "known_models": list_cpu_models(),
+        "families": grouped,
+    }
 
 
 def main() -> None:
