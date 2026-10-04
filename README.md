@@ -1,222 +1,158 @@
-# cx-programmer-mcp
+# Omron CP1E MCP Server & Automation Toolkit
 
-An MCP (Model Context Protocol) server for editing OMRON CX-Programmer ladder logic programs programmatically - without opening the GUI.
-
-> **v0.2** - Adds `list_cpu_instructions` tool, CP1E-NA instruction table, and fixes comparison mnemonic parsing (`LD>=`, `AND<>`, `OR<=`, etc.).
-
-Works with `.CXP` / `.CXT` files for **OMRON CJ/CP/CS series PLCs**.
-
-> **Scope**: Programs, Sections, Ladder Mnemonics, rung comments, and symbol table only.
-> Does **not** touch PLC Setup, I/O Table, network configuration, passwords, or transfer to PLC.
+A Model Context Protocol (MCP) server and Python automation library designed for AI agents (Claude Desktop, Cursor, Cline, Roo Code, etc.) and engineers to inspect, analyze, validate, and safely edit Omron CX-Programmer project files (`.cxt` and `.cxp`).
 
 ---
 
-## How it works
+## 1. Important Warning & PLC Compatibility
 
-OMRON documents `.CXP` as a compressed version of `.CXT`. `.CXT` is a text-based format that CX-Programmer can import/export. This server reads `.CXP` or `.CXT`, edits the program in memory, then saves the result as `.CXT` / `.CXP` for review in CX-Programmer before deploying to a real PLC.
-
-Uses Python MCP SDK v2 (`MCPServer`) with `stdio` transport.
-
----
-
-## Requirements
-
-- Python >= 3.10
-- [uv](https://docs.astral.sh/uv/) package manager
-- CX-Programmer installed (to open `.cxp` output and download to PLC)
-
----
-
-## Installation
-
-```powershell
-cd cx-programmer-mcp
-uv sync
-uv run cx-programmer-mcp
-```
+> TARGET HARDWARE WARNING:  
+> This toolkit is currently configured, tested, and validated specifically for the **Omron CP1E Series** (such as `CP1E-NA20DR-A`, `CP1E-NA20DT-D`, `CP1E-E20`, `CP1E-E/N` series).
+>
+> Key CP1E Constraints & Memory Boundaries Enforced:
+> - Timers: Standard BCD timers (`TIM xxx #SV`). CP1E does not support `TIMX` (Binary Timers).
+> - Counters: `CNT xxx #SV` (0 to 255).
+> - Data Memory: `D0` - `D7999` (Non-volatile).
+> - Work Area: `W0.00` - `W99.15`.
+> - Holding Area: `H0.00` - `H49.15` (Retentive).
+> - CIO Area: Physical Inputs `CIO 0.00 - 0.11`, Outputs `CIO 100.00 - 100.07`, Internal `CIO 2 - 199`.
+> - Auxiliary / System Flags: `P_On` (`CF113.00`), `P_First_Cycle` (`A200.11`), `P_1s` (`CF002`), `P_1m` (`CF001`), etc.
 
 ---
 
-## MCP Client Setup
+## 2. Base Templates for CP1E Series
 
-Add this to your MCP client config (e.g. Claude Desktop `claude_desktop_config.json`):
+Clean, validated base templates are included in `templates/CP1E/`:
+- `CP1E-NA.cxt` / `CP1E-NA.cxp`: For CP1E-NA models (Built-in Analog I/O).
+- `CP1E-E20.cxt` / `CP1E-E20.cxp`: For CP1E-E20 models (Standard Basic I/O).
+
+Each template contains:
+- `Section1`: A clean workspace section ready for user/AI ladder logic.
+- `END`: A dedicated termination section containing the mandatory `END(001)` instruction.
+- Zero leftover variables and valid `AtchCmts` headers (0 Errors, 0 Warnings when opened in CX-Programmer).
+
+### Automatic Project Creation:
+- **Auto-Initialization on Startup:** If you run the server targeting a non-existent file (e.g. `--project project/new_plc.cxt --allow-write`), the server will automatically clone the base template and generate its twin `.cxp` binary.
+- **Dynamic Creation via MCP Tool:** Call `create_project` tool at runtime to generate a new `.cxt` and `.cxp` pair anywhere on disk.
+
+---
+
+## 3. How AI Agents Connect to this MCP Server
+
+The server communicates via **stdio** following the Model Context Protocol specification.
+
+### A. Claude Desktop Configuration
+Add the server definition to `claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
-    "cx-programmer": {
-      "command": "uv",
-      "args": ["run", "cx-programmer-mcp"],
-      "cwd": "ABSOLUTE_PATH_TO_THIS_FOLDER"
+    "omron-plc": {
+      "command": "python",
+      "args": [
+        "C:/path/to/omron-cp1e-mcp/server.py",
+        "--project",
+        "C:/path/to/omron-cp1e-mcp/project/my_controller.cxt",
+        "--allow-write",
+        "--auto-reload-cxp"
+      ]
     }
   }
 }
 ```
 
-**Windows example:**
+### B. VS Code (Cline / Roo Code / Cursor)
+In your MCP settings configuration (`cline_mcp_settings.json` or Cursor MCP settings):
+
 ```json
-"cwd": "C:\\Users\\yourname\\cx-programmer-mcp"
+{
+  "mcpServers": {
+    "omron-plc": {
+      "command": "python",
+      "args": [
+        "C:/path/to/omron-cp1e-mcp/server.py",
+        "--project",
+        "C:/path/to/omron-cp1e-mcp/project/my_controller.cxt",
+        "--allow-write",
+        "--auto-reload-cxp"
+      ],
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}
 ```
 
-Optional - restrict file access to specific folders:
-```
-CX_MCP_ALLOWED_ROOTS=C:\PLC_Projects
-```
+### Server Startup Flags & Configurations:
+- `--allow-write`: Enables editing & commit tools (without this flag, server is strictly read-only).
+- `--auto-reload-cxp`: Enables automatic closing of CX-Programmer before writing and re-opening after commit.
+- `--no-auto-reload-cxp`: Disables automatic closing and re-opening of CX-Programmer GUI on commit.
+- Environment Variable `OMRON_AUTO_RELOAD_CXP`: Set to `1` / `true` to enable or `0` / `false` to disable by default.
+- `--cxp-path <PATH>` *(optional)*: Specifies custom path to `CX-P.exe` if not installed in default Omron directory. (Can also be configured via environment variable `OMRON_CXP_PATH`).
 
 ---
 
-## Project Template Setup
+## 4. Available MCP Tools Reference
 
-### Built-in template (CJ2M CPU11)
+| Tool Name | Parameters | Description |
+| :--- | :--- | :--- |
+| `project_summary` | `{}` | Overview of PLC model, total rungs, sections, and symbols count. |
+| `list_sections` | `{}` | Lists all sections and rung counts. |
+| `list_rungs` | `section` (req), `start` (int), `count` (int), `mode` ("summary" \| "full") | Reads paginated rungs within a section. |
+| `get_rung` | `section` (req), `index` (int, req), `mode` ("summary" \| "full") | Reads a single rung by index with comments and instructions. |
+| `list_symbols` | `scope` ("global" \| "local") | Lists all symbols with addresses, types, and comments. |
+| `search_project` | `query` (req), `section` (opt), `result_type` ("all" \| "rung" \| "symbol") | Fast regex search across instructions and symbols. |
+| `analyze_project` | `section` (opt) | Detects logic anomalies, unreset SET coils, and double outputs. |
+| `validate_project`| `{}` | Validates ladder structure and CP1E instruction constraints. |
+| `replace_rung` | `section` (req), `index` (req), `instructions` (list), `comment` (str) | Replaces a rung in memory (requires `--allow-write`). |
+| `insert_rung` | `section` (req), `index` (req), `instructions` (list), `comment` (str) | Inserts a new rung in memory (requires `--allow-write`). |
+| `delete_rung` | `section` (req), `index` (req) | Deletes a rung in memory (requires `--allow-write`). |
+| `set_symbol` | `address` (req), `name` (req), `data_type` (str), `comment` (str) | Creates or updates a symbol in memory. |
+| `commit_project` | `backup` (bool, default `true`), `reload_cxp` (bool, opt) | Validates staged changes, writes twin `.cxt`/`.cxp`, and reloads CX-Programmer GUI if configured. |
+| `add_section` | `section_name` (req), `before_section` (opt, default `"END"`) | Adds a new ladder section (requires `--allow-write`). |
+| `rename_section` | `old_name` (req), `new_name` (req) | Renames an existing ladder section (requires `--allow-write`). |
+| `create_project` | `target_path` (req), `template` (opt, default `CP1E-NA.cxt`) | Creates a brand-new project pair from base template. |
+| `open_in_cxp` | `{}` | Launches the active project in CX-Programmer GUI on Windows. |
 
-A native CJ2M CPU11 template is included. Generate a blank project:
+---
 
-```powershell
-uv run python make_template.py
-```
+## 5. CX-Programmer Auto-Close & Auto-Reopen Integration
 
-### Other PLC models
+When **CX-Programmer (`CX-P.exe`)** has a `.cxp` file open on Windows, it holds a lock on the binary project file.
 
-Each PLC model has a different binary configuration. For models other than CJ2M CPU11:
+### Controlling Auto-Reload Behavior:
 
-1. Open CX-Programmer on your machine
-2. Create a **new empty project** for your PLC model (CP1L, CS1G, CP1E-NA, etc.)
-3. Save it as `.CXP` or `.CXT`
-4. **Place the file in the `project/` folder**
-5. Update `make_template.py` to point to your file:
+1. **Auto-Reload Enabled (`--auto-reload-cxp` or `reload_cxp=true`):**
+   - **Auto-Close:** When `commit_project` is executed, MCP safely closes `CX-P.exe` to avoid file locking issues.
+   - **Atomic Write & Sync:** MCP updates the formatted `.cxt` file and encodes the binary `.cxp` file.
+   - **Auto-Reopen:** MCP immediately re-launches `CX-P.exe` with the updated file, displaying the latest ladder changes instantly.
+
+2. **Auto-Reload Disabled (`--no-auto-reload-cxp` or `reload_cxp=false`):**
+   - MCP writes `.cxt` and `.cxp` files directly to disk without touching the running `CX-P.exe` process.
+   - **CRITICAL PROCEDURE FOR USERS WHEN AUTO-RELOAD IS DISABLED:**  
+     If CX-Programmer is currently open with the target project file when MCP commits changes:
+     1. **Close CX-Programmer WITHOUT SAVING (`Don't Save`).** *(Do NOT hit Save inside CX-Programmer, or CX-Programmer will overwrite disk files with its old in-memory state!)*
+     2. Re-open the `.cxp` or `.cxt` project file in CX-Programmer to load the new changes committed by MCP.
+
+3. **On-Demand Launch:** Use the `open_in_cxp` tool at any time to open the project in CX-Programmer GUI.
+
+---
+
+## 6. Programmatic Python API (`SafePlcProject`)
 
 ```python
-SRC = Path(__file__).parent / "project" / "your_blank_template.cxp"
+from api import SafePlcProject
+
+# 1. Open existing project or create new from template
+project = SafePlcProject("project/my_controller.cxt")
+
+# 2. Inspect sections
+print("Sections:", project.list_sections())
+
+# 3. Modify logic
+project.replace_rung("Section1", 0, ["LD 0.00", "OUT 100.00"], "Toggle Output 100.00")
+
+# 4. Save and auto-reload in CX-Programmer GUI
+project.commit(backup=True, reload_cxp=True)
 ```
 
-6. Run `make_template.py` once
-
----
-
-## Example Program
-
-An example ladder program is included: `project/example_basic_io.cxp`
-
-It demonstrates a simple conveyor/IO controller with:
-- Manual output control (hold-to-run)
-- Scheduled auto run via RTC (configurable via DM)
-- Timer-based duration
-- SET/RSET latch
-- Emergency reset
-
-To rebuild it from source:
-
-```powershell
-uv run python make_template.py
-uv run python build_program.py
-```
-
-Output: `project/example_basic_io.cxp` - open in CX-Programmer to review and download.
-
----
-
-## Run Tests
-
-```powershell
-uv run pytest -q
-```
-
----
-
-## Available MCP Tools
-
-### Read-only
-
-| Tool | Description |
-|---|---|
-| `list_project_templates` | List available built-in project templates |
-| `session_status` | Current revision, dirty flag, undo depth |
-| `project_summary` | PLC model, I/O config, and program tree |
-| `list_programs` | List all programs in the loaded project |
-| `list_sections` | List sections and rung counts in a program |
-| `get_program_context` | Full ladder content with rung analysis (reads/writes/AST) |
-| `get_rungs` | Get rungs from one section with optional analysis |
-| `analyze_rung` | Parse one rung into mnemonic, boolean AST, reads/writes, timers, counters |
-| `simulate_rung` | Boolean simulation of a rung (supported subset only) |
-| `search_program` | Search mnemonic text, addresses, comments, and symbols |
-| `cross_reference_address` | Find every reference to an address (read/write/coil/set/reset) |
-| `program_diagnostics_tool` | Report duplicate coils, SET/RSET imbalance, unclassified instructions |
-| `compile_structured_rung` | Convert JSON boolean expression to mnemonic lines (dry-run) |
-| `validate_program` | Validate program XML structure |
-| `project_diff` | Diff two loaded projects |
-| `semantic_snapshot` | Semantic JSON snapshot of the full project for AI review |
-| `list_cpu_instructions` | List all known instructions for a CPU model, grouped by family |
-
-### Session edits (in-memory, undoable)
-
-| Tool | Description |
-|---|---|
-| `replace_rung` | Replace a rung's mnemonic instructions |
-| `replace_rung_structured` | Replace a rung using a JSON boolean expression |
-| `insert_rung` | Insert a new rung at a given index |
-| `delete_rung` | Delete a rung |
-| `patch_program` | Batch multiple rung edits atomically |
-| `close_project` | Discard the session without saving |
-
-### File and app
-
-| Tool | Description |
-|---|---|
-| `load_project` | Load a `.cxp` or `.cxt` file into a session |
-| `create_project_from_template` | Create a new blank project from a built-in template |
-| `save_cxt` | Write the current session to disk as `.cxt` |
-| `launch_in_cx_programmer` | Save and open the project in CX-Programmer (Windows) |
-
----
-
-## CP1E-NA Instruction Support
-
-`list_cpu_instructions` returns 60+ instructions for the CP1E-NA, grouped by family:
-
-- **contact** - LD, LDNOT, AND, ANDNOT, OR, ORNOT
-- **compare** - CMP, CMPL, LD=/LD<>/LD</LD<=/LD>/LD>=, AND=/OR= variants
-- **move** - MOV, MOVL, MVN, XFER, BSET, XCHG, DIST, COLL
-- **byte_move** - MOVB, MOVD, MOVW
-- **math** - ADD, SUB, MUL, DIV, INC, DEC, ANDW, ORW, XORW, COM, shift/rotate
-- **conversion** - BIN, BCD, BINS, BCDS, BINL, BCDL
-- **timer** - TIM, TIMH, TIMX, TIMHX
-- **counter** - CNT, CNTR, CNTX, CNTRX
-- **control_flow** - JMP, JME, CJP, IL, ILC
-- **other** - NOP, STUP, TXD, RXD (serial, CP1E-NA only)
-
-Pass `cpu_model="CP1E-NA"` to the tool. Unknown models return `known: false` and a list of registered models.
-
----
-
-## Project Structure
-
-```
-cx-programmer-mcp/
-|-- src/cx_programmer_mcp/
-|   |-- server.py              # MCP tool definitions
-|   |-- cxt.py                 # CXT/CXP parser and editor
-|   |-- ladder.py              # Mnemonic parser, analyzer, compiler, simulator
-|   |-- cpu_instructions.py    # CPU-specific instruction tables (CP1E-NA, CJ2M, ...)
-|   |-- diagnostics.py         # Program diagnostics and cross-reference
-|   |-- recipes.py             # Reusable ladder patterns
-|   |-- session.py             # In-memory session with undo/redo
-|   |-- templates.py           # Built-in template registry
-|   |-- templates/
-|       |-- CJ2M_CPU11.cxt     # Native CJ2M CPU11 blank template
-|-- tests/                     # Test suite
-|-- project/                   # Output folder
-|   |-- example_basic_io.cxp   # Example ladder program
-|-- build_program.py           # Builds the example ladder program
-|-- make_template.py           # Generates blank template from base .cxp
-|-- pyproject.toml
-```
-
----
-
-## Notes
-
-- Always run **Program Check in CX-Programmer** before downloading to a real PLC.
-- This tool edits program logic only - I/O table, unit setup, and PLC configuration are preserved as-is from the template.
-- `.CXP` output is binary-compatible with CX-Programmer 9.73 on CJ2M CPU11.
-- For other PLC models, provide your own blank `.CXP` template (see Project Template Setup above).
-- Comparison instructions (`LD>=`, `AND<>`, `OR<=`, etc.) are fully parsed and classified as family `compare` - no false warnings in diagnostics.

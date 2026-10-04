@@ -1,0 +1,371 @@
+CXProgVer:="1.5";
+WrittenByCXPVersion:="9.73";
+FileType:=1;
+Created:="3 9 2026 16 38 54";
+Modified:="19 9 2026 2 28 53";
+Name:="NewProject";
+Core:=
+BEGIN
+ CDMPath:="";
+END;
+ResourceCount:=1;
+Resource[0]:=
+BEGIN
+ Name:="NewResource1";
+ FBMemory:=
+ BEGIN
+  BR[0]:=",0";
+  BR[1]:=",0";
+  BR[3]:=",0";
+  BR[4]:=",0";
+  NumRegisters:=5;
+ END;
+ SFCMemory:=
+ BEGIN
+  BR[0]:=",-1";
+  BR[1]:=",-1";
+  NumRegisters:=2;
+ END;
+ PLC:=
+ BEGIN
+  Name:="NewPLC1";
+  Config:="[DEV]DEV:CP1E;CLOCK:TRUE;CPU:NA;GATE:FALSE;REMOTE:FALSE;UM:UM,0,18432,WORD,RW,1,RAM;[DRVR]PORT:OMR0;[NET]FRAME:1004;NET:SYNCUSB;TMO:2000;[PROJECT]HANDLE:3;KEY:!D0001;";
+  Settings:=
+  BEGIN
+   Data:=
+$?St$Bk?_#[1]
+5B 4F 4D 52 4F 4E 2E 50 4C 43 20 53 65 74 75 70 2E 43 6F 6D 70 6F 6E 65 6E 74 5D 20 43 50 31 45
+20 4E 41 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0E 89 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 5A 5A 00 00
+$?St$Bk?_#[1]
+  END;
+  ProgramCheckOptions:=
+  BEGIN
+   CheckLevel:=0;
+   DuplicatedOutputBit:=true;
+   DuplicatedOutputWord:=true;
+   DuplicatedTIMCNT:=true;
+   BlockProgram:=false;
+   Subroutine:=true;
+   JMPJME:=true;
+   FORNEXT:=true;
+   STEPSNXT:=true;
+   ILILC:=true;
+   IFIEND:=true;
+   LOOPLEND:=true;
+   Stack:=true;
+   FALFALS:=true;
+   Marks:=true;
+   NoFuncCheck:=false;
+   Writetoarray:=false;
+   FORNEXT2:=false;
+  END;
+ END;
+ GlobalVariables:=
+ BEGIN
+  VariableList:=
+  BEGIN_LIST_$#[2]
+   PB_START,0.00,BOOL,,Push Button Start Sistem;
+   PB_STOP,0.01,BOOL,,Push Button Stop Sistem;
+   SYS_RUN,W0.00,BOOL,,Status Sistem Aktif;
+   LAMPU_MERAH,100.00,BOOL,,Output Lampu Merah;
+   LAMPU_KUNING,100.01,BOOL,,Output Lampu Kuning;
+   LAMPU_HIJAU,100.02,BOOL,,Output Lampu Hijau;
+   T_MERAH_TOTAL,T000,BOOL,,Timer Merah Total (3.0s);
+   T_MERAH_PRE_KUNING,T001,BOOL,,Timer Merah sisa 1s (2.0s);
+   T_HIJAU_TOTAL,T002,BOOL,,Timer Hijau Total (3.0s);
+   T_HIJAU_PRE_KUNING,T003,BOOL,,Timer Hijau sisa 1s (2.0s);
+END_LIST_$#[2];
+  VariableCount:=10;
+  VariableMultiCommentList:=
+  BEGIN_LIST_$#[3]
+  END_LIST_$#[3];
+  VariableMultiCommentCount:=0;
+  VariableMultiCommentTypeCount:=16;
+  VariablePredefinedMultiCommentList:=
+  BEGIN_LIST_$#[4]
+  END_LIST_$#[4];
+  VariablePredefinedMultiCommentCount:=0;
+  POUInstances:=
+  BEGIN
+   NumInstances:=0;
+  END;
+ END;
+ FunctionBlocks:=
+ BEGIN
+ END;
+ Programs:=
+ BEGIN
+  Program[0]:=
+  BEGIN
+   CompileInline:=0;
+   Name:="NewProgram1";
+   FileType:=2;
+   Created:="3 9 2026 16 38 57";
+   Modified:="19 9 2026 2 28 53";
+   Protection:=
+   BEGIN
+    Enabled:=0;
+   END;
+   LocalVariables:=
+   BEGIN
+    VariableList:=
+    BEGIN_LIST_$#[5]
+    END_LIST_$#[5];
+    VariableCount:=0;
+    VariableMultiCommentList:=
+    BEGIN_LIST_$#[6]
+    END_LIST_$#[6];
+    VariableMultiCommentCount:=0;
+    VariableMultiCommentTypeCount:=16;
+    POUInstances:=
+    BEGIN
+     NumInstances:=0;
+    END;
+   END;
+   TaskID:=256;
+   OpStart:=1;
+   Sections:=
+   BEGIN
+    SC:=2;
+    Sec[0]:=
+    BEGIN
+     IEC1131Type:=11;
+     CompileInline:=0;
+     SecType:=0;
+     SecName:="TrafficLight";
+     ProgramData:=
+     BEGIN
+      RC:=8;
+      R[0]:=
+      BEGIN
+       Com:="Rung 0: Kontrol Utama Sistem Start/Stop";
+       Flags:="1,0";
+       FBversion:="";
+       SL:=
+$?St$Bk?_#[103]
+'  R0
+LD PB_START
+OR SYS_RUN
+ANDNOT PB_STOP
+OUT SYS_RUN
+$?St$Bk?_#[103]
+       AtchCmts:=
+       BEGIN
+        CC:=0;
+       END;
+      END;
+      R[1]:=
+      BEGIN
+       Com:="Rung 1: Timer Fase Merah (Total 3.0s, Kuning aktif di detik ke-2 s/d ke-3)";
+       Flags:="1,0";
+       FBversion:="";
+       SL:=
+$?St$Bk?_#[111]
+'  R0
+LD SYS_RUN
+ANDNOT T002
+TIM 000 #30
+$?St$Bk?_#[111]
+       AtchCmts:=
+       BEGIN
+        CC:=0;
+       END;
+      END;
+      R[2]:=
+      BEGIN
+       Com:="Rung 2: Timer Sisa 1s Fase Merah (2.0s)";
+       Flags:="1,0";
+       FBversion:="";
+       SL:=
+$?St$Bk?_#[112]
+'  R0
+LD SYS_RUN
+ANDNOT T002
+TIM 001 #20
+$?St$Bk?_#[112]
+       AtchCmts:=
+       BEGIN
+        CC:=0;
+       END;
+      END;
+      R[3]:=
+      BEGIN
+       Com:="Rung 2: Timer Fase Hijau (Total 3.0s, Kuning aktif di detik ke-2 s/d ke-3)";
+       Flags:="1,0";
+       FBversion:="";
+       SL:=
+$?St$Bk?_#[113]
+'  R0
+LD SYS_RUN
+AND T000
+TIM 002 #30
+$?St$Bk?_#[113]
+       AtchCmts:=
+       BEGIN
+        CC:=0;
+       END;
+      END;
+      R[4]:=
+      BEGIN
+       Com:="Rung 4: Timer Sisa 1s Fase Hijau (2.0s)";
+       Flags:="1,0";
+       FBversion:="";
+       SL:=
+$?St$Bk?_#[114]
+'  R0
+LD SYS_RUN
+AND T000
+TIM 003 #20
+$?St$Bk?_#[114]
+       AtchCmts:=
+       BEGIN
+        CC:=0;
+       END;
+      END;
+      R[5]:=
+      BEGIN
+       Com:="Rung 3: Output Lampu Merah aktif 3 detik saat fase 1";
+       Flags:="1,0";
+       FBversion:="";
+       SL:=
+$?St$Bk?_#[106]
+'  R0
+LD SYS_RUN
+ANDNOT T000
+OUT LAMPU_MERAH
+$?St$Bk?_#[106]
+       AtchCmts:=
+       BEGIN
+        CC:=0;
+       END;
+      END;
+      R[6]:=
+      BEGIN
+       Com:="Rung 4: Output Lampu Kuning menyala 1 detik sebelum pergantian fase";
+       Flags:="1,0";
+       FBversion:="";
+       SL:=
+$?St$Bk?_#[107]
+'  R0
+LD SYS_RUN
+AND T001
+ANDNOT T000
+LD SYS_RUN
+AND T003
+ANDNOT T002
+ORLD
+OUT LAMPU_KUNING
+$?St$Bk?_#[107]
+       AtchCmts:=
+       BEGIN
+        CC:=0;
+       END;
+      END;
+      R[7]:=
+      BEGIN
+       Com:="Rung 5: Output Lampu Hijau aktif 3 detik saat fase 2";
+       Flags:="1,0";
+       FBversion:="";
+       SL:=
+$?St$Bk?_#[108]
+'  R0
+LD SYS_RUN
+AND T000
+ANDNOT T002
+OUT LAMPU_HIJAU
+$?St$Bk?_#[108]
+       AtchCmts:=
+       BEGIN
+        CC:=0;
+       END;
+      END;
+     END;
+    END;
+    Sec[1]:=
+    BEGIN
+     IEC1131Type:=11;
+     CompileInline:=0;
+     SecType:=0;
+     SecName:="END";
+     ProgramData:=
+     BEGIN
+      RC:=2;
+      R[0]:=
+      BEGIN
+       Com:="";
+       Flags:="1,0";
+       FBversion:="";
+       SL:=
+$?St$Bk?_#[102]
+END(001)
+$?St$Bk?_#[102]
+       AtchCmts:=
+       BEGIN
+        CC:=0;
+       END;
+      END;
+      R[1]:=
+      BEGIN
+       Com:="";
+       Flags:="1,0";
+       FBversion:="";
+       SL:="";
+       AtchCmts:=
+       BEGIN
+        CC:=0;
+       END;
+      END;
+     END;
+    END;
+   END;
+  END;
+ END;
+END;

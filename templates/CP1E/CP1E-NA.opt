@@ -1,0 +1,253 @@
+CXProgVer:="1.6";
+DockManager:=
+BEGIN
+ Bar[0]:=
+ BEGIN
+  BarID:=59422;
+  Bars:=6;
+  Bar[0]:=0;
+  Bar[1]:=59414;
+  Bar[2]:=59415;
+  Bar[3]:=59416;
+  Bar[4]:=59412;
+  Bar[5]:=0;
+  Style:=0;
+  ExStyle:=0;
+  PrevFloating:=0;
+  MDIChild:=0;
+  PctWidth:="0";
+  MRUFloat:="0 0";
+  MRUHorzDock:="0 0";
+  MRUVertDock:="0 0";
+  MRUDockingState:=0;
+  DockingStyle:=0;
+  TypeID:=0;
+  ClassName:="";
+  WindowName:="";
+  ResourceID:=0;
+ END;
+ Bar[1]:=
+ BEGIN
+  BarID:=59420;
+  Bars:=3;
+  Bar[0]:=0;
+  Bar[1]:=59413;
+  Bar[2]:=0;
+  Style:=0;
+  ExStyle:=0;
+  PrevFloating:=0;
+  MDIChild:=0;
+  PctWidth:="0";
+  MRUFloat:="0 0";
+  MRUHorzDock:="0 0";
+  MRUVertDock:="0 0";
+  MRUDockingState:=0;
+  DockingStyle:=0;
+  TypeID:=0;
+  ClassName:="";
+  WindowName:="";
+  ResourceID:=0;
+ END;
+ Bar[2]:=
+ BEGIN
+  BarID:=59414;
+  Visible:=0;
+  Pos:="1 5";
+  Docking:=1;
+  MRUDockID:=0;
+  MRUDockPos:="1 5 1136 185";
+  MRUFloatStyle:=4;
+  MRUFloatPos:="-2147483648 0";
+  Style:=36756;
+  ExStyle:=3889;
+  PrevFloating:=0;
+  MDIChild:=0;
+  PctWidth:="1000000";
+  MRUFloat:="300 180";
+  MRUHorzDock:="1135 180";
+  MRUVertDock:="300 180";
+  MRUDockingState:=0;
+  DockingStyle:=61440;
+  TypeID:=0;
+  ClassName:="COutputWindow";
+  WindowName:="Output";
+  ResourceID:=0;
+ END;
+ Bar[3]:=
+ BEGIN
+  BarID:=59412;
+  Visible:=0;
+  Pos:="572 5";
+  MRUWidth:=1270;
+  Docking:=1;
+  MRUDockID:=59422;
+  MRUDockPos:="572 5 1136 185";
+  MRUFloatStyle:=4;
+  MRUFloatPos:="268 132";
+  Style:=36756;
+  ExStyle:=3889;
+  PrevFloating:=0;
+  MDIChild:=0;
+  PctWidth:="500000";
+  MRUFloat:="1270 474";
+  MRUHorzDock:="564 180";
+  MRUVertDock:="300 180";
+  MRUDockingState:=61440;
+  DockingStyle:=61440;
+  TypeID:=0;
+  ClassName:="CWatchWindowContainer";
+  WindowName:="Watch Window";
+  ResourceID:=0;
+ END;
+ Bar[4]:=
+ BEGIN
+  BarID:=59416;
+  Visible:=0;
+  Pos:="1 5";
+  Docking:=1;
+  MRUDockID:=0;
+  MRUDockPos:="1 5 566 185";
+  MRUFloatStyle:=4;
+  MRUFloatPos:="-2147483648 0";
+  Style:=36756;
+  ExStyle:=3889;
+  PrevFloating:=0;
+  MDIChild:=0;
+  PctWidth:="500000";
+  MRUFloat:="300 180";
+  MRUHorzDock:="565 129";
+  MRUVertDock:="300 180";
+  MRUDockingState:=0;
+  DockingStyle:=61440;
+  TypeID:=0;
+  ClassName:="CPIVWindowContainer";
+  WindowName:="FB/Structure Instance Viewer";
+  ResourceID:=0;
+ END;
+ Bar[5]:=
+ BEGIN
+  BarID:=59413;
+  Pos:="0 -2";
+  Docking:=1;
+  MRUDockID:=59420;
+  MRUDockPos:="0 -2 270 653";
+  MRUFloatStyle:=4;
+  MRUFloatPos:="-2147483648 0";
+  Style:=8084;
+  ExStyle:=3889;
+  PrevFloating:=0;
+  MDIChild:=0;
+  PctWidth:="1000000";
+  MRUFloat:="300 180";
+  MRUHorzDock:="300 180";
+  MRUVertDock:="270 655";
+  MRUDockingState:=0;
+  DockingStyle:=61440;
+  TypeID:=0;
+  ClassName:="CWorkspace";
+  WindowName:="Project Workspace";
+  ResourceID:=0;
+ END;
+ Bar[6]:=
+ BEGIN
+  BarID:=59415;
+  Visible:=0;
+  Pos:="1 5";
+  Docking:=1;
+  MRUDockID:=59422;
+  MRUDockPos:="1 5 766 185";
+  MRUFloatStyle:=4;
+  MRUFloatPos:="-2147483648 0";
+  Style:=36756;
+  ExStyle:=3889;
+  PrevFloating:=0;
+  MDIChild:=0;
+  PctWidth:="500000";
+  MRUFloat:="300 180";
+  MRUHorzDock:="765 180";
+  MRUVertDock:="300 180";
+  MRUDockingState:=0;
+  DockingStyle:=61440;
+  TypeID:=0;
+  ClassName:="CCrossReferenceWindow";
+  WindowName:="Address Reference Tool";
+  ResourceID:=0;
+ END;
+ Bars:=7;
+ Screen:="1536 864";
+END;
+ProjectTree:=
+BEGIN
+ Item[0]:=0;
+ Item[1]:=2;
+ Item[2]:=12;
+ Item[3]:=13;
+ ItemCount:=4;
+ Sumcheck:=43;
+ Selected:=17;
+END;
+Frame[0]:=
+BEGIN
+ Max:=true;
+ Norm:="0000 0000 1048 0441";
+ Min:="-001 -001";
+ Access:="PROGRAM:NewProject.Resources.NewResource1.Programs.NewProgram1.Sections.Section1!Section1";
+ Type:=1;
+ Views:=
+ BEGIN
+  View[0]:=
+  BEGIN
+  END;
+  nViews:=1;
+ END;
+END;
+nFrames:=1;
+WatchWindow:=
+BEGIN
+ NumWatch:=3;
+ Watches[0]:=
+ BEGIN
+  SheetName:="sheet1";
+  ColumnWidth[0]:=60;
+  ColumnWidth[1]:=113;
+  ColumnWidth[2]:=60;
+  ColumnWidth[3]:=138;
+  ColumnWidth[4]:=60;
+  ColumnWidth[5]:=60;
+  NumWatches:=1;
+  Watch[0]:=
+  BEGIN
+  END;
+ END;
+ Watches[1]:=
+ BEGIN
+  SheetName:="sheet2";
+  ColumnWidth[0]:=60;
+  ColumnWidth[1]:=113;
+  ColumnWidth[2]:=60;
+  ColumnWidth[3]:=138;
+  ColumnWidth[4]:=60;
+  ColumnWidth[5]:=60;
+  NumWatches:=1;
+  Watch[0]:=
+  BEGIN
+  END;
+ END;
+ Watches[2]:=
+ BEGIN
+  SheetName:="sheet3";
+  ColumnWidth[0]:=60;
+  ColumnWidth[1]:=113;
+  ColumnWidth[2]:=60;
+  ColumnWidth[3]:=138;
+  ColumnWidth[4]:=60;
+  ColumnWidth[5]:=60;
+  NumWatches:=1;
+  Watch[0]:=
+  BEGIN
+  END;
+ END;
+END;
+PrintPageSettings:=
+BEGIN
+END;
