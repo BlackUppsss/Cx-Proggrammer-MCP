@@ -1,43 +1,39 @@
-# Omron CP1E MCP Server & Automation Toolkit
+# Omron Multi-Model MCP Server & Automation Toolkit
 
-A Model Context Protocol (MCP) server and Python automation library designed for AI agents (Claude Desktop, Cursor, Cline, Roo Code, etc.) and engineers to inspect, analyze, validate, and safely edit Omron CX-Programmer project files (`.cxt` and `.cxp`).
+A Model Context Protocol (MCP) server and Python automation library designed for AI agents (Claude Desktop, Cursor, Cline, Roo Code, etc.) and engineers to inspect, analyze, simulate, validate, and safely edit Omron CX-Programmer project files (`.cxt` and `.cxp`).
 
 > [!NOTE]
-> Forked and maintained by **Rico Allif Lazzami** ([@ricolazzami](https://github.com/ricolazzami)).  
+> Forked, enhanced, and maintained by **Rico Allif Lazzami** ([@ricolazzami](https://github.com/ricolazzami)).  
 > Based on the open-source foundation from [BlackUppsss/Cx-Proggrammer-MCP](https://github.com/BlackUppsss/Cx-Proggrammer-MCP).
 
 ---
 
-## 1. Important Warning & PLC Compatibility
+## 1. Supported PLC Models & Hardware Profiles
 
-> TARGET HARDWARE WARNING:  
-> This toolkit is currently configured, tested, and validated specifically for the **Omron CP1E Series** (such as `CP1E-NA20DR-A`, `CP1E-NA20DT-D`, `CP1E-E20`, `CP1E-E/N` series).
->
-> Key CP1E Constraints & Memory Boundaries Enforced:
-> - Timers: Standard BCD timers (`TIM xxx #SV`). CP1E does not support `TIMX` (Binary Timers).
-> - Counters: `CNT xxx #SV` (0 to 255).
-> - Data Memory: `D0` - `D7999` (Non-volatile).
-> - Work Area: `W0.00` - `W99.15`.
-> - Holding Area: `H0.00` - `H49.15` (Retentive).
-> - CIO Area: Physical Inputs `CIO 0.00 - 0.11`, Outputs `CIO 100.00 - 100.07`, Internal `CIO 2 - 199`.
-> - Auxiliary / System Flags: `P_On` (`CF113.00`), `P_First_Cycle` (`A200.11`), `P_1s` (`CF002`), `P_1m` (`CF001`), etc.
+The engine automatically detects the target PLC architecture from the project's internal `Config:=` header and dynamically enforces hardware memory maps, valid timer types, and opcode boundaries:
+
+| Family | Models | Data Memory (D) | Work Area (W) | Holding (H) | Timers / Counters | Binary Timers (TIMX/CNTX) | Extended Memory (EM) |
+| :--- | :--- | :--- | :--- | :--- | :--- | :---: | :---: |
+| **CP1E** | `E20`, `N30`, `NA20` | D0 - D7999 | W0.00 - W99.15 | H0.00 - H49.15 | 256 (T0-255) | ❌ (BCD `TIM` only) | ❌ |
+| **CP1L** | `L10`, `L20`, `M30`, `M40` | D0 - D32767 | W0.00 - W511.15 | H0.00 - H511.15 | 4096 (T0-4095) | ✅ Supported | ❌ |
+| **CP1H** | `X40`, `XA40` (Analog) | D0 - D32767 | W0.00 - W511.15 | H0.00 - H511.15 | 4096 (T0-4095) | ✅ Supported | ❌ |
+| **CP2E** | `E`, `S`, `N30` (Ethernet) | D0 - D32767 | W0.00 - W511.15 | H0.00 - H1535.15 | 4096 (T0-4095) | ✅ Supported | ❌ |
+| **CJ2M** | `CPU1x`, `CPU31` | D0 - D32767 | W0.00 - W511.15 | H0.00 - H511.15 | 4096 (T0-4095) | ✅ Supported | ✅ (E0_0 - E3_32767) |
 
 ---
 
-## 2. Base Templates for CP1E Series
+## 2. Base Templates for Multiple Omron Series
 
-Clean, validated base templates are included in `templates/CP1E/`:
-- `CP1E-NA.cxt` / `CP1E-NA.cxp`: For CP1E-NA models (Built-in Analog I/O).
-- `CP1E-E20.cxt` / `CP1E-E20.cxp`: For CP1E-E20 models (Standard Basic I/O).
+Clean, compiler-validated base templates are included in `templates/`:
+- `templates/CP1E/`: `CP1E-NA.cxt` / `.cxp`, `CP1E-E20.cxt` / `.cxp`
+- `templates/CP1H/`: `CP1H-X.cxt` / `.cxp` (High-speed & Analog)
+- `templates/CP2E/`: `CP2E-N.cxt` / `.cxp` (Dual Ethernet IoT)
+- `templates/CJ2M/`: `CJ2M-CPU31.cxt` / `.cxp` (Modular PLC)
 
-Each template contains:
-- `Section1`: A clean workspace section ready for user/AI ladder logic.
-- `END`: A dedicated termination section containing the mandatory `END(001)` instruction.
-- Zero leftover variables and valid `AtchCmts` headers (0 Errors, 0 Warnings when opened in CX-Programmer).
+Each template contains a clean `Section1` workspace and mandatory `END` section with `END(001)` instruction (0 Errors, 0 Warnings when opened in CX-Programmer).
 
 ### Automatic Project Creation:
-- **Auto-Initialization on Startup:** If you run the server targeting a non-existent file (e.g. `--project project/new_plc.cxt --allow-write`), the server will automatically clone the base template and generate its twin `.cxp` binary.
-- **Dynamic Creation via MCP Tool:** Call `create_project` tool at runtime to generate a new `.cxt` and `.cxp` pair anywhere on disk.
+- Call `create_project` tool at runtime specifying `target_path` and `template` (e.g. `CP1H-X.cxt`, `CP2E-N.cxt`, or `CP1E-NA.cxt`).
 
 ---
 
@@ -54,9 +50,9 @@ Add the server definition to `claude_desktop_config.json`:
     "omron-plc": {
       "command": "python",
       "args": [
-        "C:/path/to/omron-cp1e-mcp/server.py",
+        "C:/path/to/Cx-Proggrammer-MCP/server.py",
         "--project",
-        "C:/path/to/omron-cp1e-mcp/project/my_controller.cxt",
+        "C:/path/to/Cx-Proggrammer-MCP/project/my_controller.cxt",
         "--allow-write",
         "--auto-reload-cxp"
       ]
@@ -66,17 +62,15 @@ Add the server definition to `claude_desktop_config.json`:
 ```
 
 ### B. VS Code (Cline / Roo Code / Cursor)
-In your MCP settings configuration (`cline_mcp_settings.json` or Cursor MCP settings):
-
 ```json
 {
   "mcpServers": {
     "omron-plc": {
       "command": "python",
       "args": [
-        "C:/path/to/omron-cp1e-mcp/server.py",
+        "C:/path/to/Cx-Proggrammer-MCP/server.py",
         "--project",
-        "C:/path/to/omron-cp1e-mcp/project/my_controller.cxt",
+        "C:/path/to/Cx-Proggrammer-MCP/project/my_controller.cxt",
         "--allow-write",
         "--auto-reload-cxp"
       ],
@@ -87,13 +81,6 @@ In your MCP settings configuration (`cline_mcp_settings.json` or Cursor MCP sett
 }
 ```
 
-### Server Startup Flags & Configurations:
-- `--allow-write`: Enables editing & commit tools (without this flag, server is strictly read-only).
-- `--auto-reload-cxp`: Enables automatic closing of CX-Programmer before writing and re-opening after commit.
-- `--no-auto-reload-cxp`: Disables automatic closing and re-opening of CX-Programmer GUI on commit.
-- Environment Variable `OMRON_AUTO_RELOAD_CXP`: Set to `1` / `true` to enable or `0` / `false` to disable by default.
-- `--cxp-path <PATH>` *(optional)*: Specifies custom path to `CX-P.exe` if not installed in default Omron directory. (Can also be configured via environment variable `OMRON_CXP_PATH`).
-
 ---
 
 ## 4. Available MCP Tools Reference
@@ -101,13 +88,15 @@ In your MCP settings configuration (`cline_mcp_settings.json` or Cursor MCP sett
 | Tool Name | Parameters | Description |
 | :--- | :--- | :--- |
 | `project_summary` | `{}` | Overview of PLC model, total rungs, sections, and symbols count. |
+| `get_hardware_profile` | `{}` | Returns detected Omron PLC model, CPU type, memory boundaries, and timer capabilities. |
+| `simulate_scan` | `section` (req), `inputs` (opt), `scans` (opt, int) | Offline simulation of N scan cycles for discrete logic, timers, and arithmetic without hardware. |
 | `list_sections` | `{}` | Lists all sections and rung counts. |
 | `list_rungs` | `section` (req), `start` (int), `count` (int), `mode` ("summary" \| "full") | Reads paginated rungs within a section. |
 | `get_rung` | `section` (req), `index` (int, req), `mode` ("summary" \| "full") | Reads a single rung by index with comments and instructions. |
 | `list_symbols` | `scope` ("global" \| "local") | Lists all symbols with addresses, types, and comments. |
 | `search_project` | `query` (req), `section` (opt), `result_type` ("all" \| "rung" \| "symbol") | Fast regex search across instructions and symbols. |
 | `analyze_project` | `section` (opt) | Detects logic anomalies, unreset SET coils, and double outputs. |
-| `validate_project`| `{}` | Validates ladder structure and CP1E instruction constraints. |
+| `validate_project`| `{}` | Validates ladder structure, hardware memory limits, and branch balance. |
 | `replace_rung` | `section` (req), `index` (req), `instructions` (list), `comment` (str) | Replaces a rung in memory (requires `--allow-write`). |
 | `insert_rung` | `section` (req), `index` (req), `instructions` (list), `comment` (str) | Inserts a new rung in memory (requires `--allow-write`). |
 | `delete_rung` | `section` (req), `index` (req) | Deletes a rung in memory (requires `--allow-write`). |
@@ -121,43 +110,49 @@ In your MCP settings configuration (`cline_mcp_settings.json` or Cursor MCP sett
 
 ---
 
-## 5. CX-Programmer Auto-Close & Auto-Reopen Integration
+## 5. Offline Logic Scan Cycle Simulator
 
-When **CX-Programmer (`CX-P.exe`)** has a `.cxp` file open on Windows, it holds a lock on the binary project file.
-
-### Controlling Auto-Reload Behavior:
-
-1. **Auto-Reload Enabled (`--auto-reload-cxp` or `reload_cxp=true`):**
-   - **Auto-Close:** When `commit_project` is executed, MCP safely closes `CX-P.exe` to avoid file locking issues.
-   - **Atomic Write & Sync:** MCP updates the formatted `.cxt` file and encodes the binary `.cxp` file.
-   - **Auto-Reopen:** MCP immediately re-launches `CX-P.exe` with the updated file, displaying the latest ladder changes instantly.
-
-2. **Auto-Reload Disabled (`--no-auto-reload-cxp` or `reload_cxp=false`):**
-   - MCP writes `.cxt` and `.cxp` files directly to disk without touching the running `CX-P.exe` process.
-   - **CRITICAL PROCEDURE FOR USERS WHEN AUTO-RELOAD IS DISABLED:**  
-     If CX-Programmer is currently open with the target project file when MCP commits changes:
-     1. **Close CX-Programmer WITHOUT SAVING (`Don't Save`).** *(Do NOT hit Save inside CX-Programmer, or CX-Programmer will overwrite disk files with its old in-memory state!)*
-     2. Re-open the `.cxp` or `.cxt` project file in CX-Programmer to load the new changes committed by MCP.
-
-3. **On-Demand Launch:** Use the `open_in_cxp` tool at any time to open the project in CX-Programmer GUI.
-
----
-
-## 6. Programmatic Python API (`SafePlcProject`)
+Engineers and AI agents can verify ladder logic behavior before writing to disk or downloading to hardware:
 
 ```python
 from api import SafePlcProject
 
-# 1. Open existing project or create new from template
-project = SafePlcProject("project/my_controller.cxt")
+project = SafePlcProject("project/Traffic_Light.cxt")
 
-# 2. Inspect sections
-print("Sections:", project.list_sections())
+# Simulate 3 scan cycles with Push Button Start pressed on scan 1
+traces = project.simulate_scan(
+    section="TrafficLight",
+    inputs={"PB_START": True, "PB_STOP": False},
+    scans=3
+)
 
-# 3. Modify logic
-project.replace_rung("Section1", 0, ["LD 0.00", "OUT 100.00"], "Toggle Output 100.00")
-
-# 4. Save and auto-reload in CX-Programmer GUI
-project.commit(backup=True, reload_cxp=True)
+for trace in traces:
+    print(f"Scan #{trace['scan']}: Changes = {trace['changes']}")
 ```
 
+---
+
+## 6. CLI Tools & Binary Codec Conversion
+
+Convert between binary `.cxp` and text `.cxt` effortlessly:
+
+```bash
+# Decompress binary .cxp into editable text .cxt
+python cli.py decode project/my_controller.cxp -o project/my_controller.cxt
+
+# Compress text .cxt into binary .cxp
+python cli.py encode project/my_controller.cxt -o project/my_controller.cxp
+
+# Offline simulation directly from terminal
+python cli.py simulate TrafficLight --inputs '{"PB_START": true}' --scans 3
+```
+
+---
+
+## 7. Automated Test Suite
+
+Full automated test suite with `pytest`:
+```bash
+pytest -v
+```
+All 20 test cases pass covering PKWARE DCL roundtrip, hardware boundaries, Boolean stack balance, logic simulation, and AST manipulation.

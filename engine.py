@@ -624,6 +624,23 @@ class CxtEngine:
                 "write_without_reset": sorted(set_ops - reset_ops),
                 "notes": ["Analysis is text/mnemonic-based; does not replace compiler, simulator, or live PLC online verification."]}
 
+    def get_hardware_profile(self) -> dict[str, Any]:
+        """Dapatkan profil hardware PLC yang terdeteksi dari Config."""
+        try:
+            from .hardware import detect_hardware_profile
+        except ImportError:
+            from hardware import detect_hardware_profile
+        prof = detect_hardware_profile(self.lines)
+        return {
+            "name": prof.name,
+            "family": prof.family,
+            "cpu": prof.cpu,
+            "supports_binary_timers": prof.supports_binary_timers,
+            "supports_extended_memory": prof.supports_extended_memory,
+            "memory_areas": {k: f"{v[0]}..{v[1]}" for k, v in prof.memory_areas.items()},
+            "notes": prof.notes,
+        }
+
     def validate(self) -> dict[str, Any]:
         errors = []
         warnings = []
@@ -631,6 +648,15 @@ class CxtEngine:
             progs = self.list_programs()
         except Exception as exc:
             return {"ok": False, "errors": [str(exc)], "warnings": []}
+
+        try:
+            from .hardware import detect_hardware_profile, validate_address as hw_validate_address, validate_rung_instructions
+            from .logic import validate_rung_stack
+        except ImportError:
+            from hardware import detect_hardware_profile, validate_address as hw_validate_address, validate_rung_instructions
+            from logic import validate_rung_stack
+
+        profile = detect_hardware_profile(self.lines)
 
         for prog in progs:
             pname = prog["name"]
@@ -648,26 +674,19 @@ class CxtEngine:
                 if rc is not None and rc != len(rb):
                     errors.append(f"Header RC mismatch in {pname}/{sname}: Header RC={rc}, actual rungs={len(rb)}")
 
-                # Validasi kepatuhan instruksi CP1E-NA pada setiap rung
-                try:
-                    from .cp1e import validate_rung_cp1e
-                except ImportError:
-                    from cp1e import validate_rung_cp1e
                 for rung in self.get_rungs(pname, sname):
-                    rung_errs = validate_rung_cp1e(rung["instructions"])
+                    rung_errs = validate_rung_instructions(rung["instructions"], profile=profile)
                     for err in rung_errs:
-                        errors.append(f"CP1E constraint error di {pname}/{sname} Rung {rung['index']}: {err}")
+                        errors.append(f"{profile.name} constraint error di {pname}/{sname} Rung {rung['index']}: {err}")
+                    stack_errs = validate_rung_stack(rung["instructions"])
+                    for err in stack_errs:
+                        warnings.append(f"Branch stack warning di {pname}/{sname} Rung {rung['index']}: {err}")
 
         for sym in self.list_symbols("global"):
-            # Check if address is valid PLC memory address
-            try:
-                from .cp1e import validate_address
-            except ImportError:
-                from cp1e import validate_address
-            if not validate_address(sym["address"]):
-                errors.append(f"Invalid symbol memory address '{sym['address']}' for symbol '{sym['name']}'")
+            if not hw_validate_address(sym["address"], profile=profile):
+                errors.append(f"Invalid symbol memory address '{sym['address']}' for symbol '{sym['name']}' on {profile.name}")
 
-        return {"ok": len(errors) == 0, "errors": errors, "warnings": warnings}
+        return {"ok": len(errors) == 0, "errors": errors, "warnings": warnings, "hardware": profile.name}
 
 
     def _create_versioned_backup(self, path: Path) -> Path | None:

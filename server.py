@@ -38,6 +38,8 @@ def create_server(project_path: str | Path, allow_write: bool = False, auto_relo
         types.Tool(name="search_project", description="Search mnemonic, address, symbol, or comment, optionally by section and result type.", inputSchema=schema({"query": {"type": "string", "minLength": 1}, "section": {"type": "string"}, "result_type": {"type": "string", "enum": ["all", "rung", "symbol"]}}, ["query"])),
         types.Tool(name="analyze_project", description="Detect potential comment/logic mismatches, references, conflicting output writers, and unreset SETs.", inputSchema=schema({"section": {"type": "string"}})),
         types.Tool(name="validate_project", description="Validate project structure and available PLC constraints.", inputSchema=schema({})),
+        types.Tool(name="get_hardware_profile", description="Get detected Omron PLC model, CPU type, memory boundaries, and capabilities.", inputSchema=schema({})),
+        types.Tool(name="simulate_scan", description="Simulate execution of ladder logic for N scan cycles with given inputs.", inputSchema=schema({"section": {"type": "string"}, "inputs": {"type": "object"}, "scans": {"type": "integer", "minimum": 1}}, ["section"])),
         types.Tool(name="replace_rung", description="Replace a rung (requires --allow-write). Unsaved until commit_project.", inputSchema=schema({"section": {"type": "string"}, "index": {"type": "integer", "minimum": 0}, "instructions": {"type": "array", "items": {"type": "string"}}, "comment": {"type": "string"}}, ["section", "index", "instructions"])),
         types.Tool(name="insert_rung", description="Insert a rung (requires --allow-write). Unsaved until commit_project.", inputSchema=schema({"section": {"type": "string"}, "index": {"type": "integer", "minimum": 0}, "instructions": {"type": "array", "items": {"type": "string"}}, "comment": {"type": "string"}}, ["section", "index", "instructions"])),
         types.Tool(name="delete_rung", description="Delete a rung (requires --allow-write). Unsaved until commit_project.", inputSchema=schema({"section": {"type": "string"}, "index": {"type": "integer", "minimum": 0}}, ["section", "index"])),
@@ -65,6 +67,8 @@ def create_server(project_path: str | Path, allow_write: bool = False, auto_relo
             elif name == "search_project": result = project.search(arguments["query"], arguments.get("section"), arguments.get("result_type", "all"))
             elif name == "analyze_project": result = project.analyze(arguments.get("section"))
             elif name == "validate_project": result = project.validate()
+            elif name == "get_hardware_profile": result = project.get_hardware_profile()
+            elif name == "simulate_scan": result = project.simulate_scan(arguments["section"], arguments.get("inputs"), arguments.get("scans", 1))
             elif name in {"replace_rung", "insert_rung", "delete_rung", "set_symbol", "delete_symbol", "commit_project", "create_project", "open_in_cxp", "add_section", "rename_section"}:
                 if not allow_write:
                     raise PermissionError("Penulisan dinonaktifkan. Jalankan server dengan --allow-write setelah memastikan backup.")

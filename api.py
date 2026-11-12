@@ -115,12 +115,32 @@ class SafePlcProject:
         """Dapatkan ringkasan program, section, dan jumlah rung secara ringkas."""
         sections = self.engine.list_sections(self.program_name)
         symbols = self.engine.list_symbols("global")
+        hw = self.get_hardware_profile()
         return {
             "file": str(self.cxt_path),
             "program": self.program_name,
+            "hardware": hw["name"],
             "sections": sections,
             "total_symbols": len(symbols),
         }
+
+    def get_hardware_profile(self) -> dict[str, Any]:
+        """Dapatkan profil hardware PLC yang terdeteksi dari Config."""
+        return self.engine.get_hardware_profile()
+
+    def simulate_scan(self, section: str, inputs: dict[str, Any] | None = None, scans: int = 1) -> list[dict[str, Any]]:
+        """Simulasikan eksekusi ladder pada section tertentu sebanyak N scan cycle."""
+        try:
+            from .simulator import LadderSimulator
+        except ImportError:
+            from simulator import LadderSimulator
+        sim = LadderSimulator()
+        rungs = self.engine.get_rungs(self.program_name, section)
+        results = []
+        for s in range(max(1, scans)):
+            res = sim.run_scan(rungs, inputs if s == 0 else None)
+            results.append(res)
+        return results
 
     def list_sections(self) -> list[dict[str, Any]]:
         """Daftar section program aktif beserta jumlah rung-nya."""
