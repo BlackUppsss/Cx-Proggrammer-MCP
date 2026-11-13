@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -41,11 +42,12 @@ def create_server(project_path: str | Path, allow_write: bool = False, auto_relo
         types.Tool(name="insert_rung", description="Insert a rung (requires --allow-write). Unsaved until commit_project.", inputSchema=schema({"section": {"type": "string"}, "index": {"type": "integer", "minimum": 0}, "instructions": {"type": "array", "items": {"type": "string"}}, "comment": {"type": "string"}}, ["section", "index", "instructions"])),
         types.Tool(name="delete_rung", description="Delete a rung (requires --allow-write). Unsaved until commit_project.", inputSchema=schema({"section": {"type": "string"}, "index": {"type": "integer", "minimum": 0}}, ["section", "index"])),
         types.Tool(name="set_symbol", description="Add or update a symbol (requires --allow-write). Unsaved until commit_project.", inputSchema=schema({"address": {"type": "string"}, "name": {"type": "string"}, "data_type": {"type": "string"}, "comment": {"type": "string"}}, ["address", "name"])),
+        types.Tool(name="delete_symbol", description="Delete a symbol by address or name (requires --allow-write). Unsaved until commit_project.", inputSchema=schema({"address_or_name": {"type": "string"}}, ["address_or_name"])),
         types.Tool(name="commit_project", description="Validate and save CXT/CXP pair with backup & optional CX-Programmer GUI reload (requires --allow-write).", inputSchema=schema({"backup": {"type": "boolean"}, "reload_cxp": {"type": "boolean"}})),
         types.Tool(name="open_in_cxp", description="Open active .cxp/.cxt project file in CX-Programmer Windows GUI.", inputSchema=schema({})),
         types.Tool(name="add_section", description="Add a new ladder section before a specific section (requires --allow-write).", inputSchema=schema({"section_name": {"type": "string"}, "before_section": {"type": "string"}}, ["section_name"])),
         types.Tool(name="rename_section", description="Rename a ladder section (requires --allow-write).", inputSchema=schema({"old_name": {"type": "string"}, "new_name": {"type": "string"}}, ["old_name", "new_name"])),
-        types.Tool(name="create_project", description="Create new .cxt and .cxp project files from CP1E template (requires --allow-write).", inputSchema=schema({"target_path": {"type": "string"}, "template": {"type": "string"}}, ["template"])),
+        types.Tool(name="create_project", description="Create new .cxt and .cxp project files from CP1E template (requires --allow-write).", inputSchema=schema({"target_path": {"type": "string"}, "template": {"type": "string"}}, ["target_path"])),
     ]
 
     async def list_tools(_ctx: Any = None, _params: Any = None) -> types.ListToolsResult:
@@ -63,7 +65,7 @@ def create_server(project_path: str | Path, allow_write: bool = False, auto_relo
             elif name == "search_project": result = project.search(arguments["query"], arguments.get("section"), arguments.get("result_type", "all"))
             elif name == "analyze_project": result = project.analyze(arguments.get("section"))
             elif name == "validate_project": result = project.validate()
-            elif name in {"replace_rung", "insert_rung", "delete_rung", "set_symbol", "commit_project", "create_project", "open_in_cxp", "add_section", "rename_section"}:
+            elif name in {"replace_rung", "insert_rung", "delete_rung", "set_symbol", "delete_symbol", "commit_project", "create_project", "open_in_cxp", "add_section", "rename_section"}:
                 if not allow_write:
                     raise PermissionError("Penulisan dinonaktifkan. Jalankan server dengan --allow-write setelah memastikan backup.")
                 if name == "replace_rung":
@@ -78,6 +80,9 @@ def create_server(project_path: str | Path, allow_write: bool = False, auto_relo
                     project.rename_section(arguments["old_name"], arguments["new_name"]); result = {"ok": True, "saved": False}
                 elif name == "set_symbol":
                     result = project.set_symbol(arguments["address"], arguments["name"], arguments.get("data_type", "BOOL"), arguments.get("comment", "")); result["saved"] = False
+                elif name == "delete_symbol":
+                    ok = project.delete_symbol(arguments["address_or_name"])
+                    result = {"ok": ok, "saved": False}
                 elif name == "commit_project":
                     result = project.commit(arguments.get("backup", True), reload_cxp=arguments.get("reload_cxp", None))
                 elif name == "open_in_cxp":

@@ -2,6 +2,10 @@
 
 A Model Context Protocol (MCP) server and Python automation library designed for AI agents (Claude Desktop, Cursor, Cline, Roo Code, etc.) and engineers to inspect, analyze, validate, and safely edit Omron CX-Programmer project files (`.cxt` and `.cxp`).
 
+> [!NOTE]
+> Forked and maintained by **Rico Allif Lazzami** ([@ricolazzami](https://github.com/ricolazzami)).  
+> Based on the open-source foundation from [BlackUppsss/Cx-Proggrammer-MCP](https://github.com/BlackUppsss/Cx-Proggrammer-MCP).
+
 ---
 
 ## 1. Important Warning & PLC Compatibility
@@ -108,6 +112,7 @@ In your MCP settings configuration (`cline_mcp_settings.json` or Cursor MCP sett
 | `insert_rung` | `section` (req), `index` (req), `instructions` (list), `comment` (str) | Inserts a new rung in memory (requires `--allow-write`). |
 | `delete_rung` | `section` (req), `index` (req) | Deletes a rung in memory (requires `--allow-write`). |
 | `set_symbol` | `address` (req), `name` (req), `data_type` (str), `comment` (str) | Creates or updates a symbol in memory. |
+| `delete_symbol` | `address_or_name` (req) | Deletes a symbol by address or name and updates VariableCount in memory (requires `--allow-write`). |
 | `commit_project` | `backup` (bool, default `true`), `reload_cxp` (bool, opt) | Validates staged changes, writes twin `.cxt`/`.cxp`, and reloads CX-Programmer GUI if configured. |
 | `add_section` | `section_name` (req), `before_section` (opt, default `"END"`) | Adds a new ladder section (requires `--allow-write`). |
 | `rename_section` | `old_name` (req), `new_name` (req) | Renames an existing ladder section (requires `--allow-write`). |
