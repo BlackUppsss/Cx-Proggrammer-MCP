@@ -11,6 +11,9 @@ def test_detect_hardware_profile():
     cp1e_text = 'Config:="[DEV]DEV:CP1E;CLOCK:TRUE;CPU:NA;"'
     assert detect_hardware_profile(cp1e_text).name == "CP1E"
 
+    cp1l_text = 'Config:="[DEV]DEV:CP1L;CLOCK:TRUE;CPU:M;"'
+    assert detect_hardware_profile(cp1l_text).name == "CP1L"
+
     cp1h_text = 'Config:="[DEV]DEV:CP1H;CLOCK:TRUE;CPU:X;"'
     assert detect_hardware_profile(cp1h_text).name == "CP1H"
 
@@ -28,14 +31,22 @@ def test_validate_address_limits():
     assert validate_address("D32000", "CP1H") is True
     assert validate_address("D35000", "CP1H") is False
 
-    # Holding Area on CP1E vs CP2E
+    # Holding Area on CP1E vs CP2E vs CP1L
     assert validate_address("H45.00", "CP1E") is True
     assert validate_address("H100.00", "CP1E") is False
+    assert validate_address("H100.00", "CP1L") is True
     assert validate_address("H100.00", "CP2E") is True
+
+    # Timers and Counters on CP1L
+    assert validate_address("T3500", "CP1L") is True
+    assert validate_address("T3500", "CP1E") is False
+    assert validate_address("C3500", "CP1L") is True
+    assert validate_address("C3500", "CP1E") is False
 
     # Extended Memory on CJ2M
     assert validate_address("E0_100", "CJ2M") is True
     assert validate_address("E0_100", "CP1E") is False
+    assert validate_address("E0_100", "CP1L") is False
 
 def test_strip_function_code():
     assert strip_function_code("TIMX(550)") == "TIMX"
@@ -48,7 +59,10 @@ def test_validate_rung_instructions():
     errs_cp1e = validate_rung_instructions(["LD 0.00", "TIMX(550) 000 &10"], "CP1E")
     assert any("does not support binary timer" in e for e in errs_cp1e)
 
-    # TIMX allowed on CP1H
+    # TIMX allowed on CP1L and CP1H
+    errs_cp1l = validate_rung_instructions(["LD 0.00", "TIMX(550) 000 &10"], "CP1L")
+    assert len(errs_cp1l) == 0
+
     errs_cp1h = validate_rung_instructions(["LD 0.00", "TIMX(550) 000 &10"], "CP1H")
     assert len(errs_cp1h) == 0
 
