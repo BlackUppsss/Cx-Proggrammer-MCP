@@ -80,13 +80,8 @@ class SafePlcProject:
     def __init__(self, target_path: str | Path = "project/Traffic_Light.cxt", auto_reload_cxp: bool = False, cxp_exe_path: str | Path | None = None):
         self.cxt_path = Path(target_path).resolve()
         
-        # Check environment variable if auto_reload_cxp is default False
-        if not auto_reload_cxp:
-            env_val = os.environ.get("OMRON_AUTO_RELOAD_CXP", "").strip().lower()
-            if env_val in {"1", "true", "yes", "on"}:
-                auto_reload_cxp = True
-                
-        self.auto_reload_cxp = auto_reload_cxp
+        # Auto reload and force killing CX-Programmer is completely disabled
+        self.auto_reload_cxp = False
         self.cxp_exe_path = cxp_exe_path
         if self.cxt_path.suffix.lower() == ".cxp":
             self.cxp_path = self.cxt_path
@@ -233,15 +228,16 @@ class SafePlcProject:
         if not val["ok"]:
             raise CxtBlockError(f"Validasi gagal! Transaksi dibatalkan: {val['errors']}")
 
-        should_reload = self.auto_reload_cxp if reload_cxp is None else reload_cxp
+        # By default, do not kill or reload CX-Programmer
+        should_reload = bool(reload_cxp) if reload_cxp is not None else False
         was_running = False
         if should_reload:
-            was_running = close_cx_programmer(force=True)
+            was_running = close_cx_programmer(force=False)
 
         result = self.engine.save_pair(self.cxt_path, self.cxp_path, backup=backup)
 
         reopened = False
-        if should_reload:
+        if should_reload and was_running:
             reopened = open_cx_programmer(self.cxp_path, custom_exe=self.cxp_exe_path)
 
         return {"ok": True, **result, "reopened_cxp": reopened}
