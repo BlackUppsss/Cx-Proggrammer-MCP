@@ -51,6 +51,7 @@ def create_server(project_path: str | Path, allow_write: bool = False, auto_relo
         types.Tool(name="rename_section", description="Rename a ladder section (requires --allow-write).", inputSchema=schema({"old_name": {"type": "string"}, "new_name": {"type": "string"}}, ["old_name", "new_name"])),
         types.Tool(name="create_project", description="Create new .cxt and .cxp project files from CP1E template (requires --allow-write).", inputSchema=schema({"target_path": {"type": "string"}, "template": {"type": "string"}}, ["target_path"])),
         types.Tool(name="take_screenshot", description="Capture a screenshot of CX-Programmer window for visual verification and ACC before committing.", inputSchema=schema({"output_path": {"type": "string"}, "auto_launch": {"type": "boolean"}})),
+        types.Tool(name="live_type_rung", description="Visually type ladder instructions directly into the active CX-Programmer window using shortcuts (C, /, O, I) with visible pacing.", inputSchema=schema({"instructions": {"type": "array", "items": {"type": "string"}}, "insert_new_rung": {"type": "boolean"}, "comment": {"type": "string"}, "typing_speed": {"type": "number"}}, ["instructions"])),
     ]
 
     async def list_tools(_ctx: Any = None, _params: Any = None) -> types.ListToolsResult:
@@ -71,6 +72,14 @@ def create_server(project_path: str | Path, allow_write: bool = False, auto_relo
             elif name == "get_hardware_profile": result = project.get_hardware_profile()
             elif name == "simulate_scan": result = project.simulate_scan(arguments["section"], arguments.get("inputs"), arguments.get("scans", 1))
             elif name == "take_screenshot": result = project.capture_screenshot(output_path=arguments.get("output_path"), auto_launch=arguments.get("auto_launch", True))
+            elif name == "live_type_rung":
+                from live_typer import live_type_ladder
+                result = live_type_ladder(
+                    instructions=arguments["instructions"],
+                    insert_new_rung=arguments.get("insert_new_rung", True),
+                    comment=arguments.get("comment", ""),
+                    typing_speed=float(arguments.get("typing_speed", 0.10)),
+                )
             elif name in {"replace_rung", "insert_rung", "delete_rung", "set_symbol", "delete_symbol", "commit_project", "create_project", "open_in_cxp", "add_section", "rename_section"}:
                 if not allow_write:
                     raise PermissionError("Penulisan dinonaktifkan. Jalankan server dengan --allow-write setelah memastikan backup.")
