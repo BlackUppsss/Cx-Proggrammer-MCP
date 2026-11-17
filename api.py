@@ -250,16 +250,35 @@ class SafePlcProject:
         project.commit(backup=False)
         return project
 
-    def capture_screenshot(self, output_path: str | Path | None = None, auto_launch: bool = True) -> dict[str, Any]:
-        """Capture a screenshot of CX-Programmer window for visual verification."""
-        import subprocess
+    def capture_screenshot(
+        self,
+        output_path: str | Path | None = None,
+        auto_launch: bool = True,
+        check_errors: bool = True,
+        auto_revise: bool = True,
+    ) -> dict[str, Any]:
+        """
+        Capture a screenshot of CX-Programmer window for visual verification.
+        When check_errors=True, inspects diagram for red rail syntax errors.
+        When auto_revise=True, automatically revives/undoes errors if detected.
+        """
         from pathlib import Path
+        import subprocess
 
         if not output_path:
             out_file = Path(r"C:\Users\ricou\.gemini\antigravity\brain\85540553-45af-482c-bf3e-b6320bb9837e\real_cxp_screenshot.png")
         else:
             out_file = Path(output_path).resolve()
         out_file.parent.mkdir(parents=True, exist_ok=True)
+
+        if check_errors:
+            try:
+                from visual_verifier import capture_verify_and_revise
+                res = capture_verify_and_revise(output_path=out_file, auto_revise=auto_revise)
+                res["file"] = str(self.cxp_path)
+                return res
+            except Exception as exc:
+                pass  # Fall through to basic capture
 
         ps_script = Path(r"C:\Users\ricou\capture_window.ps1")
         if ps_script.exists():
@@ -278,4 +297,8 @@ class SafePlcProject:
             return {"ok": True, "image_path": str(out_file), "fallback_rendered": True, "file": str(self.cxp_path)}
         except Exception as exc:
             return {"ok": False, "error": f"Capture failed: {exc}"}
+
+    def verify_and_revise(self, output_path: str | Path | None = None, auto_revise: bool = True) -> dict[str, Any]:
+        """Dedicated visual error verification and auto-revision tool."""
+        return self.capture_screenshot(output_path=output_path, check_errors=True, auto_revise=auto_revise)
 

@@ -50,7 +50,8 @@ def create_server(project_path: str | Path, allow_write: bool = False, auto_relo
         types.Tool(name="add_section", description="Add a new ladder section before a specific section (requires --allow-write).", inputSchema=schema({"section_name": {"type": "string"}, "before_section": {"type": "string"}}, ["section_name"])),
         types.Tool(name="rename_section", description="Rename a ladder section (requires --allow-write).", inputSchema=schema({"old_name": {"type": "string"}, "new_name": {"type": "string"}}, ["old_name", "new_name"])),
         types.Tool(name="create_project", description="Create new .cxt and .cxp project files from CP1E template (requires --allow-write).", inputSchema=schema({"target_path": {"type": "string"}, "template": {"type": "string"}}, ["target_path"])),
-        types.Tool(name="take_screenshot", description="Capture a screenshot of CX-Programmer window for visual verification and ACC before committing.", inputSchema=schema({"output_path": {"type": "string"}, "auto_launch": {"type": "boolean"}})),
+        types.Tool(name="take_screenshot", description="Capture a screenshot of CX-Programmer window for visual verification, checking for ladder syntax errors (red rail) and auto-revising them if requested.", inputSchema=schema({"output_path": {"type": "string"}, "auto_launch": {"type": "boolean"}, "check_errors": {"type": "boolean"}, "auto_revise": {"type": "boolean"}}, [])),
+        types.Tool(name="verify_and_revise", description="Analyze CX-Programmer diagram screenshot for syntax errors (red rails or error dialogs) and immediately execute live revisions/undo to fix them.", inputSchema=schema({"output_path": {"type": "string"}, "auto_revise": {"type": "boolean"}}, [])),
         types.Tool(name="live_type_rung", description="Visually type ladder instructions directly into the active CX-Programmer window using shortcuts (C, /, O, I) with visible pacing.", inputSchema=schema({"instructions": {"type": "array", "items": {"type": "string"}}, "insert_new_rung": {"type": "boolean"}, "comment": {"type": "string"}, "typing_speed": {"type": "number"}}, ["instructions"])),
     ]
 
@@ -71,7 +72,18 @@ def create_server(project_path: str | Path, allow_write: bool = False, auto_relo
             elif name == "validate_project": result = project.validate()
             elif name == "get_hardware_profile": result = project.get_hardware_profile()
             elif name == "simulate_scan": result = project.simulate_scan(arguments["section"], arguments.get("inputs"), arguments.get("scans", 1))
-            elif name == "take_screenshot": result = project.capture_screenshot(output_path=arguments.get("output_path"), auto_launch=arguments.get("auto_launch", True))
+            elif name == "take_screenshot":
+                result = project.capture_screenshot(
+                    output_path=arguments.get("output_path"),
+                    auto_launch=arguments.get("auto_launch", True),
+                    check_errors=arguments.get("check_errors", True),
+                    auto_revise=arguments.get("auto_revise", True),
+                )
+            elif name == "verify_and_revise":
+                result = project.verify_and_revise(
+                    output_path=arguments.get("output_path"),
+                    auto_revise=arguments.get("auto_revise", True),
+                )
             elif name == "live_type_rung":
                 from live_typer import live_type_ladder
                 result = live_type_ladder(

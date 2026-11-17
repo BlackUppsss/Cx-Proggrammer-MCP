@@ -149,20 +149,25 @@ def live_type_ladder(
             executed_steps.append(f"Special Instruction: {inst_text}")
             time.sleep(0.3)
 
-    # 3. Optional Screenshot after typing
-    screenshot_path = None
+    # 3. Optional Screenshot & Visual Verification after typing
+    verification_res = None
     if take_screenshot_after:
         time.sleep(0.5)
         out_file = Path(r"C:\Users\ricou\.gemini\antigravity\brain\85540553-45af-482c-bf3e-b6320bb9837e\real_cxp_screenshot.png")
-        ps_script = Path(r"C:\Users\ricou\capture_window.ps1")
-        if ps_script.exists():
-            import subprocess
-            subprocess.run(["powershell", "-ExecutionPolicy", "Bypass", "-File", str(ps_script), "-TitleContains", "CX-Programmer", "-OutputPath", str(out_file)], capture_output=True, text=True, check=False)
-            screenshot_path = str(out_file)
+        try:
+            from visual_verifier import capture_verify_and_revise
+            verification_res = capture_verify_and_revise(output_path=out_file, auto_revise=True)
+        except Exception:
+            ps_script = Path(r"C:\Users\ricou\capture_window.ps1")
+            if ps_script.exists():
+                import subprocess
+                subprocess.run(["powershell", "-ExecutionPolicy", "Bypass", "-File", str(ps_script), "-TitleContains", "CX-Programmer", "-OutputPath", str(out_file)], capture_output=True, text=True, check=False)
+                verification_res = {"ok": True, "image_path": str(out_file)}
 
     return {
         "ok": True,
         "message": f"Berhasil mengetik {len(executed_steps)} instruksi secara live di CX-Programmer.",
         "steps": executed_steps,
-        "image_path": screenshot_path,
+        "verification": verification_res,
+        "image_path": (verification_res.get("clean_image_path") or verification_res.get("image_path")) if verification_res else None,
     }
