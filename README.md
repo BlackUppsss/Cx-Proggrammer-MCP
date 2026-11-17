@@ -1,8 +1,8 @@
-# 🚀 Omron CX-Programmer MCP Server by Ricou
+# 🚀 Omron CX-Programmer MCP Server by ricolazzami
 
 <div align="center">
 
-[![Author](https://img.shields.io/badge/Author-Ricou-blueviolet?logo=github)](https://github.com/ricolazzami)
+[![Author](https://img.shields.io/badge/Author-ricolazzami-blueviolet?logo=github)](https://github.com/ricolazzami)
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB?logo=python&logoColor=white)](https://python.org)
 [![MCP](https://img.shields.io/badge/MCP-Model%20Context%20Protocol-8A2BE2)](https://modelcontextprotocol.io)
 [![Omron](https://img.shields.io/badge/PLC-CP1E%20%7C%20CP1L%20%7C%20CP1H%20%7C%20CP2E%20%7C%20CJ2M-red)](https://ia.omron.com)
