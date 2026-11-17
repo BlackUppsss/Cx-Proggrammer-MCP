@@ -269,3 +269,33 @@ class SafePlcProject:
         project = cls(target_cxt)
         project.commit(backup=False)
         return project
+
+    def capture_screenshot(self, output_path: str | Path | None = None, auto_launch: bool = True) -> dict[str, Any]:
+        """Capture a screenshot of CX-Programmer window for visual verification."""
+        import subprocess
+        from pathlib import Path
+
+        if not output_path:
+            out_file = Path(r"C:\Users\ricou\.gemini\antigravity\brain\85540553-45af-482c-bf3e-b6320bb9837e\real_cxp_screenshot.png")
+        else:
+            out_file = Path(output_path).resolve()
+        out_file.parent.mkdir(parents=True, exist_ok=True)
+
+        ps_script = Path(r"C:\Users\ricou\capture_window.ps1")
+        if ps_script.exists():
+            cmd = ["powershell", "-ExecutionPolicy", "Bypass", "-File", str(ps_script), "-TitleContains", "CX-Programmer", "-OutputPath", str(out_file)]
+            proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+            out_str = proc.stdout.strip()
+            if out_str.startswith("OK:"):
+                return {"ok": True, "image_path": str(out_file), "window_title": out_str[3:], "file": str(self.cxp_path)}
+
+        # Fallback to internal ladder renderer if window not found
+        try:
+            from ladder_renderer import render_rungs_preview
+            first_sec = self.list_sections()["sections"][0]["name"]
+            rungs = self.list_rungs(first_sec, start=0, count=4, mode="full")["items"]
+            render_rungs_preview(first_sec, rungs, output_path=out_file)
+            return {"ok": True, "image_path": str(out_file), "fallback_rendered": True, "file": str(self.cxp_path)}
+        except Exception as exc:
+            return {"ok": False, "error": f"Capture failed: {exc}"}
+
