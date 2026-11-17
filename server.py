@@ -99,7 +99,7 @@ def create_server(project_path: str | Path, allow_write: bool = False, auto_relo
                     ok = project.delete_symbol(arguments["address_or_name"])
                     result = {"ok": ok, "saved": False}
                 elif name == "commit_project":
-                    result = project.commit(arguments.get("backup", True), reload_cxp=arguments.get("reload_cxp", False))
+                    result = project.commit(arguments.get("backup", True))
                 elif name == "open_in_cxp":
                     from api import open_cx_programmer
                     reopened = open_cx_programmer(project.cxp_path, custom_exe=project.cxp_exe_path)

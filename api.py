@@ -43,15 +43,9 @@ def is_cx_programmer_running() -> bool:
     except Exception:
         return False
 
-def close_cx_programmer(force: bool = True) -> bool:
-    if not is_cx_programmer_running():
-        return False
-    try:
-        flag = "/F" if force else ""
-        subprocess.run(["taskkill", flag, "/IM", "CX-P.exe"], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return True
-    except Exception:
-        return False
+def close_cx_programmer(force: bool = False) -> bool:
+    """NEVER kill CX-Programmer. User requested CX-P to remain open at all times."""
+    return False
 
 def open_cx_programmer(project_path: str | Path, custom_exe: str | Path | None = None) -> bool:
     exe = get_cxp_executable(custom_exe)
@@ -228,19 +222,9 @@ class SafePlcProject:
         if not val["ok"]:
             raise CxtBlockError(f"Validasi gagal! Transaksi dibatalkan: {val['errors']}")
 
-        # By default, do not kill or reload CX-Programmer
-        should_reload = bool(reload_cxp) if reload_cxp is not None else False
-        was_running = False
-        if should_reload:
-            was_running = close_cx_programmer(force=False)
-
+        # Safely save CXT/CXP pair to disk without killing CX-Programmer
         result = self.engine.save_pair(self.cxt_path, self.cxp_path, backup=backup)
-
-        reopened = False
-        if should_reload and was_running:
-            reopened = open_cx_programmer(self.cxp_path, custom_exe=self.cxp_exe_path)
-
-        return {"ok": True, **result, "reopened_cxp": reopened}
+        return {"ok": True, **result, "reopened_cxp": False}
     @classmethod
     def create_new_project(cls, target_path: str | Path, template_name: str = "CP1E-NA.cxt") -> "SafePlcProject":
         """Create a new .cxt/.cxp project file from a template in the templates/ folder."""
