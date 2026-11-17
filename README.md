@@ -3,6 +3,7 @@
 <div align="center">
 
 [![Author](https://img.shields.io/badge/Author-ricolazzami-blueviolet?logo=github)](https://github.com/ricolazzami)
+[![Forked From](https://img.shields.io/badge/Forked%20From-BlackUppsss%2FCx--Proggrammer--MCP-blue?logo=github)](https://github.com/BlackUppsss/Cx-Proggrammer-MCP)
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB?logo=python&logoColor=white)](https://python.org)
 [![MCP](https://img.shields.io/badge/MCP-Model%20Context%20Protocol-8A2BE2)](https://modelcontextprotocol.io)
 [![Omron](https://img.shields.io/badge/PLC-CP1E%20%7C%20CP1L%20%7C%20CP1H%20%7C%20CP2E%20%7C%20CJ2M-red)](https://ia.omron.com)
@@ -10,6 +11,10 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 **An intelligent Model Context Protocol (MCP) server by Ricou ([@ricolazzami](https://github.com/ricolazzami)) and automation engine that empowers AI agents to inspect, simulate, visually type, verify, and auto-revise ladder logic directly inside Omron CX-Programmer.**
+
+> [!NOTE]
+> 🔱 **Fork Attribution:**  
+> Repositori ini adalah hasil *fork*, peningkatan, dan pengembangan berkelanjutan dari basis kode sumber terbuka [**BlackUppsss/Cx-Proggrammer-MCP**](https://github.com/BlackUppsss/Cx-Proggrammer-MCP) oleh **Ricou** ([@ricolazzami](https://github.com/ricolazzami)), dengan fitur eksklusif berupa **Zero-Kill Safe Commit**, **Deteksi Rail Merah & Auto-Revisi Visual**, **Live Typing Automation**, dan **Visual Preview ACC**.
 
 [Features](#-key-features) • [Visual Showcase](#-visual-showcase) • [Architecture](#-architecture) • [Getting Started](#-getting-started) • [Tools Reference](#-available-mcp-tools) • [Simulation](#-offline-logic-simulation)
 
