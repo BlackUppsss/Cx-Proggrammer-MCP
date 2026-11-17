@@ -1,14 +1,15 @@
-# 🚀 Omron CX-Programmer MCP Server
+# 🚀 Omron CX-Programmer MCP Server by Ricou
 
 <div align="center">
 
+[![Author](https://img.shields.io/badge/Author-Ricou-blueviolet?logo=github)](https://github.com/ricolazzami)
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB?logo=python&logoColor=white)](https://python.org)
 [![MCP](https://img.shields.io/badge/MCP-Model%20Context%20Protocol-8A2BE2)](https://modelcontextprotocol.io)
 [![Omron](https://img.shields.io/badge/PLC-CP1E%20%7C%20CP1L%20%7C%20CP1H%20%7C%20CP2E%20%7C%20CJ2M-red)](https://ia.omron.com)
-[![Status](https://img.shields.io/badge/Safe%20Commit-Zero--Kill%20Architecture-success)](https://github.com/ricolazzami/Cx-Proggrammer-MCP)
+[![Status](https://img.shields.io/badge/Safe%20Commit-Zero--Kill%20Architecture-success)](https://github.com/ricolazzami/Cx-Proggrammer-MCP-by-ricou)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**An intelligent Model Context Protocol (MCP) server and automation engine that empowers AI agents to inspect, simulate, visually type, verify, and auto-revise ladder logic directly inside Omron CX-Programmer.**
+**An intelligent Model Context Protocol (MCP) server by Ricou ([@ricolazzami](https://github.com/ricolazzami)) and automation engine that empowers AI agents to inspect, simulate, visually type, verify, and auto-revise ladder logic directly inside Omron CX-Programmer.**
 
 [Features](#-key-features) • [Visual Showcase](#-visual-showcase) • [Architecture](#-architecture) • [Getting Started](#-getting-started) • [Tools Reference](#-available-mcp-tools) • [Simulation](#-offline-logic-simulation)
 
@@ -125,8 +126,8 @@ flowchart TD
 
 ### Installation
 ```bash
-git clone https://github.com/ricolazzami/Cx-Proggrammer-MCP.git
-cd Cx-Proggrammer-MCP
+git clone https://github.com/ricolazzami/Cx-Proggrammer-MCP-by-ricou.git
+cd Cx-Proggrammer-MCP-by-ricou
 
 # Create and activate virtual environment
 python -m venv .venv
@@ -242,6 +243,6 @@ for trace in traces:
 
 Contributions, issues, and feature requests are welcome!
 
-- **Maintained by:** [Rico Allif Lazzami](https://github.com/ricolazzami)
+- **Author & Lead Maintainer:** **Ricou** ([Rico Allif Lazzami](https://github.com/ricolazzami))
 - **Base Foundation:** [BlackUppsss/Cx-Proggrammer-MCP](https://github.com/BlackUppsss/Cx-Proggrammer-MCP)
 - **License:** MIT License. See [LICENSE](LICENSE) for details.
