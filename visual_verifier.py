@@ -140,9 +140,12 @@ def auto_revise_ladder(
     actions.append("Dismissed modal dialogs/prompts with Escape")
 
     # 2. Capture baseline before rollback
-    out_file = Path(screenshot_output_path or r"C:\Users\ricou\.gemini\antigravity\brain\85540553-45af-482c-bf3e-b6320bb9837e\real_cxp_screenshot.png")
+    default_brain = Path(r"C:\Users\ricou\.gemini\antigravity\brain\85540553-45af-482c-bf3e-b6320bb9837e")
+    fallback_out = (default_brain if default_brain.exists() else Path.cwd()) / "real_cxp_screenshot.png"
+    out_file = Path(screenshot_output_path or fallback_out)
     out_file.parent.mkdir(parents=True, exist_ok=True)
-    ps_script = Path(r"C:\Users\ricou\capture_window.ps1")
+    pkg_script = Path(__file__).resolve().parent / "scripts" / "capture_window.ps1"
+    ps_script = pkg_script if pkg_script.exists() else Path(r"C:\Users\ricou\capture_window.ps1")
 
     revised_successfully = False
     for step in range(1, max_steps + 1):
@@ -190,12 +193,14 @@ def capture_verify_and_revise(
     4. Returns complete report with images and status.
     """
     if not output_path:
-        out_file = Path(r"C:\Users\ricou\.gemini\antigravity\brain\85540553-45af-482c-bf3e-b6320bb9837e\real_cxp_screenshot.png")
+        default_brain = Path(r"C:\Users\ricou\.gemini\antigravity\brain\85540553-45af-482c-bf3e-b6320bb9837e")
+        out_file = (default_brain if default_brain.exists() else Path.cwd()) / "real_cxp_screenshot.png"
     else:
         out_file = Path(output_path).resolve()
     out_file.parent.mkdir(parents=True, exist_ok=True)
 
-    ps_script = Path(r"C:\Users\ricou\capture_window.ps1")
+    pkg_script = Path(__file__).resolve().parent / "scripts" / "capture_window.ps1"
+    ps_script = pkg_script if pkg_script.exists() else Path(r"C:\Users\ricou\capture_window.ps1")
     if not ps_script.exists():
         return {"ok": False, "error": "capture_window.ps1 not found."}
 

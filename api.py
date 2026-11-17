@@ -229,18 +229,20 @@ class SafePlcProject:
     def create_new_project(cls, target_path: str | Path, template_name: str = "CP1E-NA.cxt") -> "SafePlcProject":
         """Create a new .cxt/.cxp project file from a template in the templates/ folder."""
         target_cxt = Path(target_path).with_suffix(".cxt").resolve()
-        target_cxp = target_cxt.with_suffix(".cxp")
         target_cxt.parent.mkdir(parents=True, exist_ok=True)
 
-        # Search for template
         templates_dir = Path(__file__).resolve().parent / "templates"
-        matched_templates = list(templates_dir.rglob(template_name))
+        all_cxt = sorted(templates_dir.rglob("*.cxt"))
+        req = template_name.strip()
+        req_upper = req.upper().removesuffix(".CXT").removesuffix(".CXP")
+
+        matched_templates = [p for p in all_cxt if p.name.lower() == req.lower() or p.stem.upper() == req_upper]
         if not matched_templates:
-            # Fallback search by key
-            matched_templates = list(templates_dir.rglob("*.cxt"))
-        
+            matched_templates = [p for p in all_cxt if p.stem.upper().startswith(req_upper) or p.parent.name.upper() == req_upper]
+
         if not matched_templates:
-            raise FileNotFoundError(f"Template '{template_name}' not found in templates/ directory")
+            available = ", ".join(p.name for p in all_cxt)
+            raise FileNotFoundError(f"Template '{template_name}' not found in templates/ directory (available: {available})")
 
         src_template = matched_templates[0]
         import shutil
@@ -266,7 +268,9 @@ class SafePlcProject:
         import subprocess
 
         if not output_path:
-            out_file = Path(r"C:\Users\ricou\.gemini\antigravity\brain\85540553-45af-482c-bf3e-b6320bb9837e\real_cxp_screenshot.png")
+            default_brain = Path(r"C:\Users\ricou\.gemini\antigravity\brain\85540553-45af-482c-bf3e-b6320bb9837e")
+            base_dir = default_brain if default_brain.exists() else self.cxt_path.parent
+            out_file = base_dir / "real_cxp_screenshot.png"
         else:
             out_file = Path(output_path).resolve()
         out_file.parent.mkdir(parents=True, exist_ok=True)
@@ -275,12 +279,14 @@ class SafePlcProject:
             try:
                 from visual_verifier import capture_verify_and_revise
                 res = capture_verify_and_revise(output_path=out_file, auto_revise=auto_revise)
-                res["file"] = str(self.cxp_path)
-                return res
-            except Exception as exc:
+                if res.get("ok"):
+                    res["file"] = str(self.cxp_path)
+                    return res
+            except Exception:
                 pass  # Fall through to basic capture
 
-        ps_script = Path(r"C:\Users\ricou\capture_window.ps1")
+        pkg_script = Path(__file__).resolve().parent / "scripts" / "capture_window.ps1"
+        ps_script = pkg_script if pkg_script.exists() else Path(r"C:\Users\ricou\capture_window.ps1")
         if ps_script.exists():
             cmd = ["powershell", "-ExecutionPolicy", "Bypass", "-File", str(ps_script), "-TitleContains", "CX-Programmer", "-OutputPath", str(out_file)]
             proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
@@ -291,7 +297,8 @@ class SafePlcProject:
         # Fallback to internal ladder renderer if window not found
         try:
             from ladder_renderer import render_rungs_preview
-            first_sec = self.list_sections()["sections"][0]["name"]
+            sections = self.list_sections()
+            first_sec = sections[0]["name"]
             rungs = self.list_rungs(first_sec, start=0, count=4, mode="full")["items"]
             render_rungs_preview(first_sec, rungs, output_path=out_file)
             return {"ok": True, "image_path": str(out_file), "fallback_rendered": True, "file": str(self.cxp_path)}

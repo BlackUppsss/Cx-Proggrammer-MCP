@@ -115,7 +115,7 @@ def main():
                         if args.query.lower() in inst.lower():
                             print(f"    -> {inst}")
                 elif m["type"] == "symbol":
-                    print(f"[Symbol] {m['name']} @ {m['address']} ({m['type']}) - {m['comment']}")
+                    print(f"[Symbol] {m['name']} @ {m['address']} ({m.get('data_type', m['type'])}) - {m['comment']}")
             print()
 
         elif args.command == "validate":
@@ -129,7 +129,7 @@ def main():
                 print(f"[WARNINGS] {v['warnings']}\n")
 
         elif args.command == "symbols":
-            symbols = prj.engine.list_symbols(args.scope)
+            symbols = prj.engine.list_symbols(args.scope, prj.program_name)
             print(f"\n[Symbols ({args.scope})] Total: {len(symbols)}")
             for s in symbols:
                 print(f"  {s['address']:<10} {s['name']:<25} {s['type']:<8} {s['comment']}")

@@ -43,6 +43,30 @@ def test_symbol_crud():
         syms_after = [s["name"] for s in p.engine.list_symbols("global")]
         assert "MY_TEST_FLAG" not in syms_after
 
+def test_multi_model_create_and_high_range_symbols():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        models = [
+            ("CP1E-NA.cxt", "CP1E", "W50.00", ["LD 0.00", "TIM 000 #10"]),
+            ("CP1L-M.cxt", "CP1L", "D15000", ["LD 0.00", "TIMX(550) 000 &50"]),
+            ("CP1H-X.cxt", "CP1H", "W250.05", ["LD 0.00", "TIMX(550) 000 &50"]),
+            ("CP2E-N.cxt", "CP2E", "H500.00", ["LD 0.00", "TIMX(550) 000 &50"]),
+            ("CJ1M-CPU13.cxt", "CJ1M", "E0_100", ["LD 0.00", "TIMX(550) 000 &50"]),
+            ("CJ2M-CPU31.cxt", "CJ2M", "E2_100", ["LD 0.00", "TIMX(550) 000 &50"]),
+            ("CS1H-CPU67.cxt", "CS1H", "E5_500", ["LD 0.00", "TIMX(550) 000 &50"]),
+        ]
+        for tmpl, expected_hw, test_addr, test_rung in models:
+            target = Path(tmpdir) / f"proj_{expected_hw}.cxt"
+            p = SafePlcProject.create_new_project(target, template_name=tmpl)
+            assert p.get_hardware_profile()["name"] == expected_hw
+            dtype = "CHANNEL" if test_addr.startswith(("D", "E")) else "BOOL"
+            p.set_symbol(test_addr, f"SYM_{expected_hw}", dtype, f"Test on {expected_hw}")
+            p.replace_rung("Section1", 0, test_rung, f"Rung on {expected_hw}")
+            val = p.validate()
+            assert val["ok"] is True, f"Validation failed on {expected_hw}: {val}"
+            assert val["warnings"] == [], f"Unexpected warnings on {expected_hw}: {val['warnings']}"
+            res = p.commit(backup=False)
+            assert res["ok"] is True
+
 def test_section_crud():
     with tempfile.TemporaryDirectory() as tmpdir:
         src = Path("project/Traffic_Light.cxt")

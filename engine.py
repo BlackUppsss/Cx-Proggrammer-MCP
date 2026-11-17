@@ -234,6 +234,7 @@ class CxtEngine:
         return bool(
             re.fullmatch(r"\$\?St\$Bk\?_#\[\d+\]", stripped)
             or re.fullmatch(r"'\s*R\d+", stripped)
+            or re.fullmatch(r"//\s*\d+", stripped)
             or stripped in {"BEGIN", "END;", "BEGIN_LIST_$#[2]", "END_LIST_$#[2]"}
         )
 
@@ -492,17 +493,23 @@ class CxtEngine:
     ) -> dict[str, str]:
         # Auto-correct swapped arguments if name is a valid address and address is a symbol name
         try:
-            from .cp1e import validate_address
+            from .hardware import detect_hardware_profile, validate_address as hw_validate_address
         except ImportError:
-            from cp1e import validate_address
-        if not validate_address(address) and validate_address(name):
+            from hardware import detect_hardware_profile, validate_address as hw_validate_address
+
+        profile = detect_hardware_profile(self.lines)
+        is_number_type = data_type.strip().upper() == "NUMBER"
+        is_num_const = lambda val: bool(re.fullmatch(r"(?:[#&][0-9A-Fa-f]+|\d+)", val.strip()))
+        is_valid_addr = lambda val: hw_validate_address(val, profile=profile) or (is_number_type and is_num_const(val))
+
+        if not is_valid_addr(address) and is_valid_addr(name):
             address, name = name, address
-        if not validate_address(address):
-            raise CxtBlockError(f"Invalid PLC memory address: {address}")
+        if not is_valid_addr(address):
+            raise CxtBlockError(f"Invalid PLC memory address '{address}' on {profile.name}")
         if not name.strip():
             raise CxtBlockError("Symbol name cannot be empty")
 
-        # Omron CX-Programmer CP1E-NA expects 5 CSV fields: [name, address, type, "", comment]
+        # Omron CX-Programmer expects 5 CSV fields: [name, address, type, "", comment]
         # Timer and Counter bit contacts must use BOOL data type in VariableList
         normalized_dtype = "BOOL" if data_type.upper() in ("TIMER", "COUNTER") else data_type
         
@@ -564,7 +571,8 @@ class CxtEngine:
             raise ValueError("result_type harus 'all', 'rung', atau 'symbol'")
         q = query.lower()
         matches = []
-        for p in self.list_programs():
+        progs = self.list_programs()
+        for p in progs:
             pname = p["name"]
             for sec in self.list_sections(pname):
                 sname = sec["name"]
@@ -581,13 +589,22 @@ class CxtEngine:
                             "comment": rung["comment"],
                             "instructions": rung["instructions"]
                         })
-        for sym in self.list_symbols("global"):
-            if result_type in {"all", "symbol"} and q in sym["name"].lower() or result_type in {"all", "symbol"} and (q in sym["address"].lower() or q in sym["comment"].lower()):
-                matches.append({"type": "symbol", "scope": "global", **sym})
+        if result_type in {"all", "symbol"}:
+            for sym in self.list_symbols("global"):
+                if q in sym["name"].lower() or q in sym["address"].lower() or q in sym["comment"].lower():
+                    matches.append({**sym, "data_type": sym["type"], "type": "symbol", "scope": "global"})
+            for p in progs:
+                pname = p["name"]
+                try:
+                    for sym in self.list_symbols("local", pname):
+                        if q in sym["name"].lower() or q in sym["address"].lower() or q in sym["comment"].lower():
+                            matches.append({**sym, "data_type": sym["type"], "type": "symbol", "scope": "local", "program": pname})
+                except CxtBlockError:
+                    pass
         return matches
 
     def analyze(self, program_name: str, section: str | None = None) -> dict[str, Any]:
-        address_re = re.compile(r"\b(?:CIO|W|H|D|T|C|A)\d+(?:\.\d+)?\b", re.I)
+        address_re = re.compile(r"\b(?:CIO|IR|W|H|HR|D|DM|T|TIM|C|CNT|A|AR|LR|E[0-9A-F]?_?)\d+(?:\.\d+)?\b", re.I)
         writer_re = re.compile(r"^\s*(OUT|SET|RSET|RST|KEEP|SFT|MOV|MOVL|XFER)\b", re.I)
         sections = [s["name"] for s in self.list_sections(program_name)]
         if section and section.lower() not in {s.lower() for s in sections}:
@@ -682,9 +699,22 @@ class CxtEngine:
                     for err in stack_errs:
                         warnings.append(f"Branch stack warning di {pname}/{sname} Rung {rung['index']}: {err}")
 
+        def _check_symbol(sym: dict[str, str], scope_label: str) -> None:
+            addr = sym["address"].strip()
+            dtype = sym.get("type", "").strip().upper()
+            if dtype == "NUMBER" and re.fullmatch(r"(?:[#&][0-9A-Fa-f]+|\d+)", addr):
+                return
+            if not hw_validate_address(addr, profile=profile):
+                errors.append(f"Invalid {scope_label} symbol memory address '{addr}' for symbol '{sym['name']}' on {profile.name}")
+
         for sym in self.list_symbols("global"):
-            if not hw_validate_address(sym["address"], profile=profile):
-                errors.append(f"Invalid symbol memory address '{sym['address']}' for symbol '{sym['name']}' on {profile.name}")
+            _check_symbol(sym, "global")
+        for prog in progs:
+            try:
+                for sym in self.list_symbols("local", prog["name"]):
+                    _check_symbol(sym, f"local({prog['name']})")
+            except CxtBlockError:
+                pass
 
         return {"ok": len(errors) == 0, "errors": errors, "warnings": warnings, "hardware": profile.name}
 

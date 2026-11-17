@@ -24,10 +24,21 @@ class LadderSimulator:
 
     def _norm_addr(self, address: str) -> str:
         addr = address.strip().upper()
+        # Normalize Timer T0 / T00 / T000 / T0000 -> T000 (or T1000 for >=1000)
+        m_tim = re.match(r"^(?:TIM|T)(\d{1,4})$", addr)
+        if m_tim:
+            return f"T{int(m_tim.group(1)):03d}"
+        # Normalize Counter C0 / C001 / C0001 -> C001
+        m_cnt = re.match(r"^(?:CNT|C)(\d{1,4})$", addr)
+        if m_cnt:
+            return f"C{int(m_cnt.group(1)):03d}"
         # Normalise 0.00 -> CIO0.00 or 100.01 -> CIO100.01
         m = re.match(r"^(\d+)\.(\d{1,2})$", addr)
         if m:
             return f"CIO{m.group(1)}.{int(m.group(2)):02d}"
+        m_area_bit = re.match(r"^([A-Z]+)(\d+)\.(\d{1,2})$", addr)
+        if m_area_bit:
+            return f"{m_area_bit.group(1)}{int(m_area_bit.group(2))}.{int(m_area_bit.group(3)):02d}"
         m_word = re.match(r"^\d+$", addr)
         if m_word:
             return f"CIO{addr}"
@@ -71,7 +82,7 @@ class LadderSimulator:
 
         for line in instructions:
             line_clean = line.strip()
-            if not line_clean or line_clean.startswith("'"):
+            if not line_clean or line_clean.startswith("'") or line_clean.startswith("//"):
                 continue
 
             tokens = line_clean.split()
@@ -145,9 +156,16 @@ class LadderSimulator:
                     rung_changes[target] = False
             elif cmd == "KEEP":
                 target = operands[0]
-                # In single-rung KEEP: stack top is set condition, previous or direct
-                set_cond = stack[-1] if stack else False
-                if set_cond:
+                if len(stack) >= 2:
+                    rst_cond = stack.pop()
+                    set_cond = stack[-1]
+                else:
+                    rst_cond = False
+                    set_cond = stack[-1] if stack else False
+                if rst_cond:
+                    self.set_bit(target, False)
+                    rung_changes[target] = False
+                elif set_cond:
                     self.set_bit(target, True)
                     rung_changes[target] = True
 
@@ -172,8 +190,8 @@ class LadderSimulator:
                     rung_changes[target] = True
 
             # Timers
-            elif cmd in {"TIM", "TIMX"}:
-                t_num = f"T{int(operands[0]):03d}" if operands[0].isdigit() else operands[0].upper()
+            elif cmd in {"TIM", "TIMX", "TIMH", "TIMHX"}:
+                t_num = self._norm_addr(f"T{operands[0]}" if operands[0].isdigit() else operands[0])
                 pv = self.get_word(operands[1]) if len(operands) > 1 else 10
                 power = stack[-1] if stack else False
                 t_state = self.timers.setdefault(t_num, {"pv": pv, "sv": pv, "done": False})
@@ -186,15 +204,25 @@ class LadderSimulator:
                     t_state["done"] = False
                 rung_changes[t_num] = {"pv": t_state["pv"], "done": t_state["done"]}
 
-            # Counters
+            # Counters (2-input: LD pulse, LD reset, CNT num sv)
             elif cmd in {"CNT", "CNTX"}:
-                c_num = f"C{int(operands[0]):03d}" if operands[0].isdigit() else operands[0].upper()
+                c_num = self._norm_addr(f"C{operands[0]}" if operands[0].isdigit() else operands[0])
                 sv = self.get_word(operands[1]) if len(operands) > 1 else 10
                 c_state = self.counters.setdefault(c_num, {"pv": sv, "sv": sv, "done": False, "prev_in": False})
-                pulse_in = stack[-1] if stack else False
-                if pulse_in and not c_state["prev_in"] and c_state["pv"] > 0:
-                    c_state["pv"] -= 1
-                c_state["done"] = c_state["pv"] == 0
+                if len(stack) >= 2:
+                    reset_in = stack.pop()
+                    pulse_in = stack[-1]
+                else:
+                    reset_in = False
+                    pulse_in = stack[-1] if stack else False
+
+                if reset_in:
+                    c_state["pv"] = sv
+                    c_state["done"] = False
+                else:
+                    if pulse_in and not c_state["prev_in"] and c_state["pv"] > 0:
+                        c_state["pv"] -= 1
+                    c_state["done"] = c_state["pv"] == 0
                 c_state["prev_in"] = pulse_in
                 rung_changes[c_num] = {"pv": c_state["pv"], "done": c_state["done"]}
 

@@ -233,13 +233,21 @@ for trace in traces:
 
 ## 📊 Supported Omron Hardware Profiles
 
-| Family | Models | Data Memory (D) | Work Area (W) | Holding Area (H) | Timers & Counters | Binary Timers (TIMX/CNTX) |
-| :--- | :--- | :--- | :--- | :--- | :--- | :---: |
-| **CP1E** | `E20`, `N30`, `NA20` | D0 - D7999 | W0.00 - W99.15 | H0.00 - H49.15 | 256 (`T0-255`, `C0-255`) | ❌ (BCD Only) |
-| **CP1L** | `L10`, `L20`, `M30`, `M40` | D0 - D32767 | W0.00 - W511.15 | H0.00 - H511.15 | 4096 (`T0-4095`, `C0-4095`) | ✅ Supported |
-| **CP1H** | `X40`, `XA40` | D0 - D32767 | W0.00 - W511.15 | H0.00 - H511.15 | 4096 (`T0-4095`, `C0-4095`) | ✅ Supported |
-| **CP2E** | `E`, `S`, `N30` | D0 - D32767 | W0.00 - W511.15 | H0.00 - H1535.15 | 4096 (`T0-4095`, `C0-4095`) | ✅ Supported |
-| **CJ2M** | `CPU1x`, `CPU31` | D0 - D32767 | W0.00 - W511.15 | H0.00 - H511.15 | 4096 (`T0-4095`, `C0-4095`) | ✅ Supported |
+Reverse-engineered directly from `CX-P.exe`, `CX-Pdata.dll`, and `StaticDB.xml`:
+
+| Family | Series / Models | CIO / IR | Data Memory (D/DM) | Work Area (W) | Holding (H/HR) | Timers & Counters | Binary Timers (`TIMX`) | EM Banks |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :---: | :---: |
+| **CP1E** | `E10..60`, `N14..60`, `NA20` | 0 - 199 | D0 - D7999 | W0 - W99 | H0 - H49 | 256 (`T/C 0-255`) | ❌ (BCD Only) | ❌ |
+| **CP1L** | `L10..20`, `M30..60`, `EL/EM` | 0 - 6143 | D0 - D32767 | W0 - W511 | H0 - H511 | 4096 (`T/C 0-4095`) | ✅ Supported | ❌ |
+| **CP1H** | `X40`, `XA40`, `Y20`, `EX` | 0 - 6143 | D0 - D32767 | W0 - W511 | H0 - H511 | 4096 (`T/C 0-4095`) | ✅ Supported | ❌ |
+| **CP2E** | `E`, `S`, `N`, `ENT` | 0 - 6143 | D0 - D32767 | W0 - W511 | H0 - H1535 | 4096 (`T/C 0-4095`) | ✅ Supported | ❌ |
+| **CJ1M** | `CPU11..13`, `CPU21..23` | 0 - 6143 | D0 - D32767 | W0 - W511 | H0 - H511 | 4096 (`T/C 0-4095`) | ✅ Supported | ✅ (`E0`) |
+| **CJ1G / CJ1H** | `CPU42..45`, `CPU64..67` | 0 - 6143 | D0 - D32767 | W0 - W511 | H0 - H511 | 4096 (`T/C 0-4095`) | ✅ Supported | ✅ (`E0..E12`) |
+| **CJ2M / CJ2H** | `CPU11..35`, `CPU64..68-EIP` | 0 - 6143 | D0 - D32767 | W0 - W511 | H0 - H1535 | 4096 (`T/C 0-4095`) | ✅ Supported | ✅ (`E0..E24`) |
+| **CS1G / H / D**| `CPU42..45`, `CPU63..68` | 0 - 6143 | D0 - D32767 | W0 - W511 | H0 - H511 | 4096 (`T/C 0-4095`) | ✅ Supported | ✅ (`E0..E12`) |
+| **CPM1A / 2A** | `CPM1`, `CPM1A`, `CPM2A/2C` | 0 - 255 | DM0 - DM6655 | — | HR0 - HR19 | 128 / 256 | ❌ (BCD Only) | ❌ |
+| **CQM1H / C200H**| `CQM1H`, `C200HS/HE/HG/HX` | 0 - 511 | DM0 - DM6655 | — | HR0 - HR99 | 512 (`T/C 0-511`) | ❌ (BCD Only) | ✅ (`E0..E2`) |
+| **NSJ / FQM1 / CV**| `NSJ-G5D`, `FQM1`, `CVM1-V2` | 0 - 6143 | D0 - D32767 | W0 - W511 | H0 - H511 | 1024 - 4096 | ✅ / ❌ | ✅ |
 
 ---
 
