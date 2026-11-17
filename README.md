@@ -243,10 +243,22 @@ for trace in traces:
 
 ---
 
-## 🤝 Contributing & License
+## 🤝 Acknowledgments & Lineage
 
-Contributions, issues, and feature requests are welcome!
+This project is built upon the open-source work of the community:
 
-- **Maintained by:** [Rico Allif Lazzami](https://github.com/ricolazzami)
-- **Base Foundation:** [BlackUppsss/Cx-Proggrammer-MCP](https://github.com/BlackUppsss/Cx-Proggrammer-MCP)
-- **License:** MIT License. See [LICENSE](LICENSE) for details.
+- **Original Foundation & Core Concepts:**  
+  Created by [**BlackUppsss**](https://github.com/BlackUppsss) ([BlackUppsss/Cx-Proggrammer-MCP](https://github.com/BlackUppsss/Cx-Proggrammer-MCP)).  
+  *Original contributions include:* CP1E AST engine, PKWARE DCL decompression/compression codec, and foundational MCP tools.
+
+- **Fork Enhancements & Maintenance:**  
+  Maintained by [**Rico Allif Lazzami**](https://github.com/ricolazzami).  
+  *Added capabilities:* Multi-model architecture support (CP1L, CP1H, CP2E, CJ2M), Zero-Kill safe commit workflow, visual error detection & auto-revision (red rail scanner), live typing automation, and standalone vector diagram rendering.
+
+If you find this MCP server useful, please consider starring both this repository and the [original upstream project](https://github.com/BlackUppsss/Cx-Proggrammer-MCP)!
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. It preserves all original credits and licenses of upstream components.
