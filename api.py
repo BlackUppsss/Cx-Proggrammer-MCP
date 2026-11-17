@@ -61,7 +61,7 @@ def open_cx_programmer(project_path: str | Path, custom_exe: str | Path | None =
     if target.with_suffix(".cxp").exists():
         target = target.with_suffix(".cxp")
     try:
-        subprocess.Popen([str(exe), str(target)])
+        subprocess.Popen([str(exe), str(target)], cwd=str(exe.parent))
         return True
     except Exception:
         return False
