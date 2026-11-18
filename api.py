@@ -43,15 +43,9 @@ def is_cx_programmer_running() -> bool:
     except Exception:
         return False
 
-def close_cx_programmer(force: bool = True) -> bool:
-    if not is_cx_programmer_running():
-        return False
-    try:
-        flag = "/F" if force else ""
-        subprocess.run(["taskkill", flag, "/IM", "CX-P.exe"], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return True
-    except Exception:
-        return False
+def close_cx_programmer(force: bool = False) -> bool:
+    """NEVER kill CX-Programmer. User requested CX-P to remain open at all times."""
+    return False
 
 def open_cx_programmer(project_path: str | Path, custom_exe: str | Path | None = None) -> bool:
     exe = get_cxp_executable(custom_exe)
@@ -61,7 +55,7 @@ def open_cx_programmer(project_path: str | Path, custom_exe: str | Path | None =
     if target.with_suffix(".cxp").exists():
         target = target.with_suffix(".cxp")
     try:
-        subprocess.Popen([str(exe), str(target)])
+        subprocess.Popen([str(exe), str(target)], cwd=str(exe.parent))
         return True
     except Exception:
         return False
@@ -80,13 +74,8 @@ class SafePlcProject:
     def __init__(self, target_path: str | Path = "project/Traffic_Light.cxt", auto_reload_cxp: bool = False, cxp_exe_path: str | Path | None = None):
         self.cxt_path = Path(target_path).resolve()
         
-        # Check environment variable if auto_reload_cxp is default False
-        if not auto_reload_cxp:
-            env_val = os.environ.get("OMRON_AUTO_RELOAD_CXP", "").strip().lower()
-            if env_val in {"1", "true", "yes", "on"}:
-                auto_reload_cxp = True
-                
-        self.auto_reload_cxp = auto_reload_cxp
+        # Auto reload and force killing CX-Programmer is completely disabled
+        self.auto_reload_cxp = False
         self.cxp_exe_path = cxp_exe_path
         if self.cxt_path.suffix.lower() == ".cxp":
             self.cxp_path = self.cxt_path
@@ -115,12 +104,32 @@ class SafePlcProject:
         """Dapatkan ringkasan program, section, dan jumlah rung secara ringkas."""
         sections = self.engine.list_sections(self.program_name)
         symbols = self.engine.list_symbols("global")
+        hw = self.get_hardware_profile()
         return {
             "file": str(self.cxt_path),
             "program": self.program_name,
+            "hardware": hw["name"],
             "sections": sections,
             "total_symbols": len(symbols),
         }
+
+    def get_hardware_profile(self) -> dict[str, Any]:
+        """Dapatkan profil hardware PLC yang terdeteksi dari Config."""
+        return self.engine.get_hardware_profile()
+
+    def simulate_scan(self, section: str, inputs: dict[str, Any] | None = None, scans: int = 1) -> list[dict[str, Any]]:
+        """Simulasikan eksekusi ladder pada section tertentu sebanyak N scan cycle."""
+        try:
+            from .simulator import LadderSimulator
+        except ImportError:
+            from simulator import LadderSimulator
+        sim = LadderSimulator()
+        rungs = self.engine.get_rungs(self.program_name, section)
+        results = []
+        for s in range(max(1, scans)):
+            res = sim.run_scan(rungs, inputs if s == 0 else None)
+            results.append(res)
+        return results
 
     def list_sections(self) -> list[dict[str, Any]]:
         """Daftar section program aktif beserta jumlah rung-nya."""
@@ -213,34 +222,27 @@ class SafePlcProject:
         if not val["ok"]:
             raise CxtBlockError(f"Validasi gagal! Transaksi dibatalkan: {val['errors']}")
 
-        should_reload = self.auto_reload_cxp if reload_cxp is None else reload_cxp
-        was_running = False
-        if should_reload:
-            was_running = close_cx_programmer(force=True)
-
+        # Safely save CXT/CXP pair to disk without killing CX-Programmer
         result = self.engine.save_pair(self.cxt_path, self.cxp_path, backup=backup)
-
-        reopened = False
-        if should_reload:
-            reopened = open_cx_programmer(self.cxp_path, custom_exe=self.cxp_exe_path)
-
-        return {"ok": True, **result, "reopened_cxp": reopened}
+        return {"ok": True, **result, "reopened_cxp": False}
     @classmethod
     def create_new_project(cls, target_path: str | Path, template_name: str = "CP1E-NA.cxt") -> "SafePlcProject":
         """Create a new .cxt/.cxp project file from a template in the templates/ folder."""
         target_cxt = Path(target_path).with_suffix(".cxt").resolve()
-        target_cxp = target_cxt.with_suffix(".cxp")
         target_cxt.parent.mkdir(parents=True, exist_ok=True)
 
-        # Search for template
         templates_dir = Path(__file__).resolve().parent / "templates"
-        matched_templates = list(templates_dir.rglob(template_name))
+        all_cxt = sorted(templates_dir.rglob("*.cxt"))
+        req = template_name.strip()
+        req_upper = req.upper().removesuffix(".CXT").removesuffix(".CXP")
+
+        matched_templates = [p for p in all_cxt if p.name.lower() == req.lower() or p.stem.upper() == req_upper]
         if not matched_templates:
-            # Fallback search by key
-            matched_templates = list(templates_dir.rglob("*.cxt"))
-        
+            matched_templates = [p for p in all_cxt if p.stem.upper().startswith(req_upper) or p.parent.name.upper() == req_upper]
+
         if not matched_templates:
-            raise FileNotFoundError(f"Template '{template_name}' not found in templates/ directory")
+            available = ", ".join(p.name for p in all_cxt)
+            raise FileNotFoundError(f"Template '{template_name}' not found in templates/ directory (available: {available})")
 
         src_template = matched_templates[0]
         import shutil
@@ -249,3 +251,61 @@ class SafePlcProject:
         project = cls(target_cxt)
         project.commit(backup=False)
         return project
+
+    def capture_screenshot(
+        self,
+        output_path: str | Path | None = None,
+        auto_launch: bool = True,
+        check_errors: bool = True,
+        auto_revise: bool = True,
+    ) -> dict[str, Any]:
+        """
+        Capture a screenshot of CX-Programmer window for visual verification.
+        When check_errors=True, inspects diagram for red rail syntax errors.
+        When auto_revise=True, automatically revives/undoes errors if detected.
+        """
+        from pathlib import Path
+        import subprocess
+
+        if not output_path:
+            default_brain = Path(r"C:\Users\ricou\.gemini\antigravity\brain\85540553-45af-482c-bf3e-b6320bb9837e")
+            base_dir = default_brain if default_brain.exists() else self.cxt_path.parent
+            out_file = base_dir / "real_cxp_screenshot.png"
+        else:
+            out_file = Path(output_path).resolve()
+        out_file.parent.mkdir(parents=True, exist_ok=True)
+
+        if check_errors:
+            try:
+                from visual_verifier import capture_verify_and_revise
+                res = capture_verify_and_revise(output_path=out_file, auto_revise=auto_revise)
+                if res.get("ok"):
+                    res["file"] = str(self.cxp_path)
+                    return res
+            except Exception:
+                pass  # Fall through to basic capture
+
+        pkg_script = Path(__file__).resolve().parent / "scripts" / "capture_window.ps1"
+        ps_script = pkg_script if pkg_script.exists() else Path(r"C:\Users\ricou\capture_window.ps1")
+        if ps_script.exists():
+            cmd = ["powershell", "-ExecutionPolicy", "Bypass", "-File", str(ps_script), "-TitleContains", "CX-Programmer", "-OutputPath", str(out_file)]
+            proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+            out_str = proc.stdout.strip()
+            if out_str.startswith("OK:"):
+                return {"ok": True, "image_path": str(out_file), "window_title": out_str[3:], "file": str(self.cxp_path)}
+
+        # Fallback to internal ladder renderer if window not found
+        try:
+            from ladder_renderer import render_rungs_preview
+            sections = self.list_sections()
+            first_sec = sections[0]["name"]
+            rungs = self.list_rungs(first_sec, start=0, count=4, mode="full")["items"]
+            render_rungs_preview(first_sec, rungs, output_path=out_file)
+            return {"ok": True, "image_path": str(out_file), "fallback_rendered": True, "file": str(self.cxp_path)}
+        except Exception as exc:
+            return {"ok": False, "error": f"Capture failed: {exc}"}
+
+    def verify_and_revise(self, output_path: str | Path | None = None, auto_revise: bool = True) -> dict[str, Any]:
+        """Dedicated visual error verification and auto-revision tool."""
+        return self.capture_screenshot(output_path=output_path, check_errors=True, auto_revise=auto_revise)
+

@@ -1,80 +1,182 @@
-# Omron CP1E MCP Server & Automation Toolkit
+# 🚀 Omron CX-Programmer MCP Server
 
-A Model Context Protocol (MCP) server and Python automation library designed for AI agents (Claude Desktop, Cursor, Cline, Roo Code, etc.) and engineers to inspect, analyze, validate, and safely edit Omron CX-Programmer project files (`.cxt` and `.cxp`).
+<div align="center">
 
----
+[![Forked From](https://img.shields.io/badge/Forked%20From-BlackUppsss%2FCx--Proggrammer--MCP-blue?logo=github)](https://github.com/BlackUppsss/Cx-Proggrammer-MCP)
+[![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB?logo=python&logoColor=white)](https://python.org)
+[![MCP](https://img.shields.io/badge/MCP-Model%20Context%20Protocol-8A2BE2)](https://modelcontextprotocol.io)
+[![Omron](https://img.shields.io/badge/PLC-CP1E%20%7C%20CP1L%20%7C%20CP1H%20%7C%20CP2E%20%7C%20CJ2M-red)](https://ia.omron.com)
+[![Status](https://img.shields.io/badge/Safe%20Commit-Zero--Kill%20Architecture-success)](https://github.com/ricolazzami/Cx-Proggrammer-MCP)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## 1. Important Warning & PLC Compatibility
+**An intelligent Model Context Protocol (MCP) server and automation engine that empowers AI agents to inspect, simulate, visually type, verify, and auto-revise ladder logic directly inside Omron CX-Programmer.**
 
-> TARGET HARDWARE WARNING:  
-> This toolkit is currently configured, tested, and validated specifically for the **Omron CP1E Series** (such as `CP1E-NA20DR-A`, `CP1E-NA20DT-D`, `CP1E-E20`, `CP1E-E/N` series).
->
-> Key CP1E Constraints & Memory Boundaries Enforced:
-> - Timers: Standard BCD timers (`TIM xxx #SV`). CP1E does not support `TIMX` (Binary Timers).
-> - Counters: `CNT xxx #SV` (0 to 255).
-> - Data Memory: `D0` - `D7999` (Non-volatile).
-> - Work Area: `W0.00` - `W99.15`.
-> - Holding Area: `H0.00` - `H49.15` (Retentive).
-> - CIO Area: Physical Inputs `CIO 0.00 - 0.11`, Outputs `CIO 100.00 - 100.07`, Internal `CIO 2 - 199`.
-> - Auxiliary / System Flags: `P_On` (`CF113.00`), `P_First_Cycle` (`A200.11`), `P_1s` (`CF002`), `P_1m` (`CF001`), etc.
+> [!NOTE]
+> 🔱 **Fork Attribution:**  
+> Repositori ini adalah hasil *fork*, peningkatan, dan pengembangan berkelanjutan dari basis kode sumber terbuka [**BlackUppsss/Cx-Proggrammer-MCP**](https://github.com/BlackUppsss/Cx-Proggrammer-MCP) oleh [**ricolazzami**](https://github.com/ricolazzami), dengan fitur eksklusif berupa **Zero-Kill Safe Commit**, **Deteksi Rail Merah & Auto-Revisi Visual**, **Live Typing Automation**, dan **Visual Preview ACC**.
 
----
-
-## 2. Base Templates for CP1E Series
-
-Clean, validated base templates are included in `templates/CP1E/`:
-- `CP1E-NA.cxt` / `CP1E-NA.cxp`: For CP1E-NA models (Built-in Analog I/O).
-- `CP1E-E20.cxt` / `CP1E-E20.cxp`: For CP1E-E20 models (Standard Basic I/O).
-
-Each template contains:
-- `Section1`: A clean workspace section ready for user/AI ladder logic.
-- `END`: A dedicated termination section containing the mandatory `END(001)` instruction.
-- Zero leftover variables and valid `AtchCmts` headers (0 Errors, 0 Warnings when opened in CX-Programmer).
-
-### Automatic Project Creation:
-- **Auto-Initialization on Startup:** If you run the server targeting a non-existent file (e.g. `--project project/new_plc.cxt --allow-write`), the server will automatically clone the base template and generate its twin `.cxp` binary.
-- **Dynamic Creation via MCP Tool:** Call `create_project` tool at runtime to generate a new `.cxt` and `.cxp` pair anywhere on disk.
+[Features](#-key-features) • [Visual Showcase](#-visual-showcase) • [Architecture](#-architecture) • [Getting Started](#-getting-started) • [Tools Reference](#-available-mcp-tools) • [Simulation](#-offline-logic-simulation)
 
 ---
 
-## 3. How AI Agents Connect to this MCP Server
+<img src="assets/overview.png" alt="CX-Programmer Live Overview" width="850" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
 
-The server communicates via **stdio** following the Model Context Protocol specification.
+</div>
 
-### A. Claude Desktop Configuration
-Add the server definition to `claude_desktop_config.json`:
+---
+
+## 🌟 Key Features
+
+- 👁️ **Visual Error Detection & Auto-Revision:**  
+  Real-time image inspection for CX-Programmer's signature red power rail (`R > 180`). If an invalid rung, open branch, or modal popup is detected, the MCP automatically executes live rollbacks (`Ctrl + Z`) and cleans up prompts until the diagram returns to a 100% verified state.
+- ⚡ **Zero-Kill / No-Crash Architecture:**  
+  Operates without force-closing (`taskkill`) or crashing `CX-P.exe`. Both text `.cxt` and compressed binary `.cxp` formats are kept in twin-sync safely.
+- ⌨️ **Live Human-Paced Typing Automation:**  
+  Types ladder logic directly into the active CX-Programmer canvas using native keyboard shortcuts (`C` for NO contact, `/` for NC contact, `O` for Coil, `I` for instructions like `TIM` / `CNT`) with visible pacing.
+- 🖼️ **Instant Visual Feedback & ACC:**  
+  Captures interactive window screenshots and renders standalone 2D ladder PNG previews for instant agent visual confirmation and user sign-off in chat.
+- ⏱️ **Offline Scan Cycle Simulation:**  
+  Simulate discrete scan cycles, timer delays, and counter accumulation offline without physical PLC hardware.
+- 🎯 **Multi-Model Hardware Profiles:**  
+  Strict boundary enforcement for **CP1E**, **CP1L**, **CP1H**, **CP2E**, and **CJ2M** architectures (Data Memory `D`, Work bits `W`, Holding bits `H`, Timers `T`, and Counters `C`).
+
+---
+
+## 📸 Visual Showcase
+
+### 1. Live Ladder Construction (Timer & 2-Input Counter)
+The MCP types contacts, timers (`TIM`), and 2-input counters (`CNT`) with automatic busbar connection and coil termination:
+
+<div align="center">
+  <img src="assets/ladder_logic_demo.png" alt="Live Ladder Diagram with Timer and Counter" width="750" />
+  <p><em>Verified live ladder diagram: Rung 0 (Direct Coil), Rungs 2 & 4 (ON-Delay Timer), Rungs 6 & 9 (2-Input Pulse & Reset Counter).</em></p>
+</div>
+
+### 2. Auto-Healing: Error Detection vs. Auto-Revised Clean State
+When an open rung or syntax mismatch occurs, CX-Programmer flags the rung with a red rail. The MCP detects the red pixels and auto-heals the ladder:
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center"><b>❌ Red Rail Error Detected</b></td>
+      <td align="center"><b>✅ Auto-Revised Clean State</b></td>
+    </tr>
+    <tr>
+      <td><img src="assets/error_red_rail.png" width="400" alt="Error Red Rail" /></td>
+      <td><img src="assets/auto_revised_clean.png" width="400" alt="Auto-Revised Clean" /></td>
+    </tr>
+    <tr>
+      <td align="center"><em>Open branch / missing connection detected</em></td>
+      <td align="center"><em>Auto-rollback via Ctrl+Z, 0 red pixels confirmed</em></td>
+    </tr>
+  </table>
+</div>
+
+### 3. High-Definition Standalone Ladder Preview
+For headless environments or quick inspection, the MCP renders standalone clean 2D vector diagrams without opening CX-Programmer:
+
+<div align="center">
+  <img src="assets/rendered_preview.png" alt="Headless 2D Ladder Renderer" width="700" />
+</div>
+
+---
+
+## 🏗️ Architecture
+
+```mermaid
+flowchart TD
+    subgraph AI["AI Client / LLM"]
+        Agent["Claude / Cursor / Cline / Antigravity"]
+    end
+
+    subgraph MCP["Cx-Proggrammer-MCP Server"]
+        Router["JSON-RPC Tool Router (server.py)"]
+        SafeAPI["SafePlcProject API (api.py)"]
+        Engine["AST & Huffman DCL Codec (engine.py / codec.py)"]
+        Simulator["Scan Cycle Simulator (simulator.py)"]
+        Verifier["Visual Error Verifier (visual_verifier.py)"]
+        Typer["Live Typer Engine (live_typer.py)"]
+        Renderer["2D Ladder Renderer (ladder_renderer.py)"]
+    end
+
+    subgraph Desktop["Windows Desktop & CX-Programmer"]
+        Win32["Win32 Desktop Bridge (capture_window.ps1)"]
+        CXP["Omron CX-Programmer (CX-P.exe)"]
+        TwinFiles[("Twin Project Files (.cxt & .cxp)")]
+    end
+
+    Agent <-->|Stdio / MCP| Router
+    Router --> SafeAPI
+    SafeAPI --> Engine
+    SafeAPI --> Simulator
+    SafeAPI --> Verifier
+    SafeAPI --> Typer
+    SafeAPI --> Renderer
+
+    Engine <-->|Read / Safe Twin-Commit| TwinFiles
+    Verifier <-->|Cross-Desktop Window Capture| Win32
+    Typer <-->|Keyboard Injections (C, /, O, I)| CXP
+    Win32 <-->|Desktop Desktop API| CXP
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- **Windows OS** (CX-Programmer native platform)
+- **Python 3.10+**
+- **Omron CX-One / CX-Programmer** installed (for GUI automation & live inspection)
+
+### Installation
+```bash
+git clone https://github.com/ricolazzami/Cx-Proggrammer-MCP.git
+cd Cx-Proggrammer-MCP
+
+# Create and activate virtual environment
+python -m venv .venv
+.venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+---
+
+## ⚙️ Client Configuration
+
+### Claude Desktop
+Add to your `%APPDATA%\Claude\claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
-    "omron-plc": {
-      "command": "python",
+    "cx-programmer": {
+      "command": "C:/Users/ricou/Cx-Proggrammer-MCP/.venv/Scripts/python.exe",
       "args": [
-        "C:/path/to/omron-cp1e-mcp/server.py",
+        "C:/Users/ricou/Cx-Proggrammer-MCP/server.py",
         "--project",
-        "C:/path/to/omron-cp1e-mcp/project/my_controller.cxt",
-        "--allow-write",
-        "--auto-reload-cxp"
+        "C:/path/to/project.cxt",
+        "--allow-write"
       ]
     }
   }
 }
 ```
 
-### B. VS Code (Cline / Roo Code / Cursor)
-In your MCP settings configuration (`cline_mcp_settings.json` or Cursor MCP settings):
+### VS Code / Cursor / Roo Code / Cline
+Add to your `mcp.json` or Cline MCP settings:
 
 ```json
 {
   "mcpServers": {
-    "omron-plc": {
-      "command": "python",
+    "cx-programmer": {
+      "command": "C:/Users/ricou/Cx-Proggrammer-MCP/.venv/Scripts/python.exe",
       "args": [
-        "C:/path/to/omron-cp1e-mcp/server.py",
+        "C:/Users/ricou/Cx-Proggrammer-MCP/server.py",
         "--project",
-        "C:/path/to/omron-cp1e-mcp/project/my_controller.cxt",
-        "--allow-write",
-        "--auto-reload-cxp"
+        "C:/path/to/project.cxt",
+        "--allow-write"
       ],
       "disabled": false,
       "autoApprove": []
@@ -83,76 +185,88 @@ In your MCP settings configuration (`cline_mcp_settings.json` or Cursor MCP sett
 }
 ```
 
-### Server Startup Flags & Configurations:
-- `--allow-write`: Enables editing & commit tools (without this flag, server is strictly read-only).
-- `--auto-reload-cxp`: Enables automatic closing of CX-Programmer before writing and re-opening after commit.
-- `--no-auto-reload-cxp`: Disables automatic closing and re-opening of CX-Programmer GUI on commit.
-- Environment Variable `OMRON_AUTO_RELOAD_CXP`: Set to `1` / `true` to enable or `0` / `false` to disable by default.
-- `--cxp-path <PATH>` *(optional)*: Specifies custom path to `CX-P.exe` if not installed in default Omron directory. (Can also be configured via environment variable `OMRON_CXP_PATH`).
-
 ---
 
-## 4. Available MCP Tools Reference
+## 🛠️ Available MCP Tools
 
 | Tool Name | Parameters | Description |
 | :--- | :--- | :--- |
-| `project_summary` | `{}` | Overview of PLC model, total rungs, sections, and symbols count. |
-| `list_sections` | `{}` | Lists all sections and rung counts. |
-| `list_rungs` | `section` (req), `start` (int), `count` (int), `mode` ("summary" \| "full") | Reads paginated rungs within a section. |
-| `get_rung` | `section` (req), `index` (int, req), `mode` ("summary" \| "full") | Reads a single rung by index with comments and instructions. |
-| `list_symbols` | `scope` ("global" \| "local") | Lists all symbols with addresses, types, and comments. |
-| `search_project` | `query` (req), `section` (opt), `result_type` ("all" \| "rung" \| "symbol") | Fast regex search across instructions and symbols. |
-| `analyze_project` | `section` (opt) | Detects logic anomalies, unreset SET coils, and double outputs. |
-| `validate_project`| `{}` | Validates ladder structure and CP1E instruction constraints. |
-| `replace_rung` | `section` (req), `index` (req), `instructions` (list), `comment` (str) | Replaces a rung in memory (requires `--allow-write`). |
-| `insert_rung` | `section` (req), `index` (req), `instructions` (list), `comment` (str) | Inserts a new rung in memory (requires `--allow-write`). |
-| `delete_rung` | `section` (req), `index` (req) | Deletes a rung in memory (requires `--allow-write`). |
-| `set_symbol` | `address` (req), `name` (req), `data_type` (str), `comment` (str) | Creates or updates a symbol in memory. |
-| `commit_project` | `backup` (bool, default `true`), `reload_cxp` (bool, opt) | Validates staged changes, writes twin `.cxt`/`.cxp`, and reloads CX-Programmer GUI if configured. |
-| `add_section` | `section_name` (req), `before_section` (opt, default `"END"`) | Adds a new ladder section (requires `--allow-write`). |
-| `rename_section` | `old_name` (req), `new_name` (req) | Renames an existing ladder section (requires `--allow-write`). |
-| `create_project` | `target_path` (req), `template` (opt, default `CP1E-NA.cxt`) | Creates a brand-new project pair from base template. |
-| `open_in_cxp` | `{}` | Launches the active project in CX-Programmer GUI on Windows. |
+| `take_screenshot` | `output_path`, `check_errors` (bool), `auto_revise` (bool) | Captures active CX-P window, checks for red rail errors, and auto-heals diagram if needed. |
+| `verify_and_revise` | `output_path`, `auto_revise` (bool) | Dedicated visual auditor: scans ladder for red error rails and rolls back invalid instructions. |
+| `live_type_rung` | `instructions` (list), `insert_new_rung` (bool), `typing_speed` (num) | Visually types instructions into CX-Programmer using native hotkeys with human-paced pacing. |
+| `project_summary` | `{}` | Summary of PLC model, CPU type, rungs count, sections, and symbols. |
+| `get_hardware_profile`| `{}` | Returns architecture limits (Data Memory, Work bits, Timers, Counters). |
+| `simulate_scan` | `section`, `inputs`, `scans` | Simulates N discrete scan cycles offline with state transition tracing. |
+| `list_sections` | `{}` | Lists all ladder sections with rung counts. |
+| `list_rungs` | `section`, `start`, `count`, `mode` | Paginated inspection of rungs within a section. |
+| `get_rung` | `section`, `index`, `mode` | Reads a single rung by index with comments and instruction list. |
+| `list_symbols` | `scope` ("global" \| "local") | Lists all symbol variables with addresses, data types, and comments. |
+| `search_project` | `query`, `section`, `result_type` | Regex search across ladder instructions and variable tables. |
+| `validate_project` | `{}` | Programmatic AST validation: checks branch balance, stack depth, and memory boundaries. |
+| `commit_project` | `backup` (bool) | Atomically validates and commits twin `.cxt` and `.cxp` files without killing CX-P. |
+| `create_project` | `target_path`, `template` | Spawns a clean project pair from validated CP1E/CP1H/CP2E/CJ2M base templates. |
+| `open_in_cxp` | `{}` | Opens active project safely in CX-Programmer GUI. |
 
 ---
 
-## 5. CX-Programmer Auto-Close & Auto-Reopen Integration
+## 🧪 Offline Logic Simulation
 
-When **CX-Programmer (`CX-P.exe`)** has a `.cxp` file open on Windows, it holds a lock on the binary project file.
-
-### Controlling Auto-Reload Behavior:
-
-1. **Auto-Reload Enabled (`--auto-reload-cxp` or `reload_cxp=true`):**
-   - **Auto-Close:** When `commit_project` is executed, MCP safely closes `CX-P.exe` to avoid file locking issues.
-   - **Atomic Write & Sync:** MCP updates the formatted `.cxt` file and encodes the binary `.cxp` file.
-   - **Auto-Reopen:** MCP immediately re-launches `CX-P.exe` with the updated file, displaying the latest ladder changes instantly.
-
-2. **Auto-Reload Disabled (`--no-auto-reload-cxp` or `reload_cxp=false`):**
-   - MCP writes `.cxt` and `.cxp` files directly to disk without touching the running `CX-P.exe` process.
-   - **CRITICAL PROCEDURE FOR USERS WHEN AUTO-RELOAD IS DISABLED:**  
-     If CX-Programmer is currently open with the target project file when MCP commits changes:
-     1. **Close CX-Programmer WITHOUT SAVING (`Don't Save`).** *(Do NOT hit Save inside CX-Programmer, or CX-Programmer will overwrite disk files with its old in-memory state!)*
-     2. Re-open the `.cxp` or `.cxt` project file in CX-Programmer to load the new changes committed by MCP.
-
-3. **On-Demand Launch:** Use the `open_in_cxp` tool at any time to open the project in CX-Programmer GUI.
-
----
-
-## 6. Programmatic Python API (`SafePlcProject`)
+Engineers can test logic before writing to disk or commissioning hardware:
 
 ```python
 from api import SafePlcProject
 
-# 1. Open existing project or create new from template
-project = SafePlcProject("project/my_controller.cxt")
+project = SafePlcProject("project/Conveyor_Control.cxt")
 
-# 2. Inspect sections
-print("Sections:", project.list_sections())
+# Simulate 3 scan cycles with Sensor active on scan 1
+traces = project.simulate_scan(
+    section="ConveyorSection",
+    inputs={"SENSOR_1": True, "ESTOP": False},
+    scans=3
+)
 
-# 3. Modify logic
-project.replace_rung("Section1", 0, ["LD 0.00", "OUT 100.00"], "Toggle Output 100.00")
-
-# 4. Save and auto-reload in CX-Programmer GUI
-project.commit(backup=True, reload_cxp=True)
+for trace in traces:
+    print(f"Scan #{trace['scan']}: Output Changes = {trace['changes']}")
 ```
 
+---
+
+## 📊 Supported Omron Hardware Profiles
+
+Reverse-engineered directly from `CX-P.exe`, `CX-Pdata.dll`, and `StaticDB.xml`:
+
+| Family | Series / Models | CIO / IR | Data Memory (D/DM) | Work Area (W) | Holding (H/HR) | Timers & Counters | Binary Timers (`TIMX`) | EM Banks |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :---: | :---: |
+| **CP1E** | `E10..60`, `N14..60`, `NA20` | 0 - 199 | D0 - D7999 | W0 - W99 | H0 - H49 | 256 (`T/C 0-255`) | ❌ (BCD Only) | ❌ |
+| **CP1L** | `L10..20`, `M30..60`, `EL/EM` | 0 - 6143 | D0 - D32767 | W0 - W511 | H0 - H511 | 4096 (`T/C 0-4095`) | ✅ Supported | ❌ |
+| **CP1H** | `X40`, `XA40`, `Y20`, `EX` | 0 - 6143 | D0 - D32767 | W0 - W511 | H0 - H511 | 4096 (`T/C 0-4095`) | ✅ Supported | ❌ |
+| **CP2E** | `E`, `S`, `N`, `ENT` | 0 - 6143 | D0 - D32767 | W0 - W511 | H0 - H1535 | 4096 (`T/C 0-4095`) | ✅ Supported | ❌ |
+| **CJ1M** | `CPU11..13`, `CPU21..23` | 0 - 6143 | D0 - D32767 | W0 - W511 | H0 - H511 | 4096 (`T/C 0-4095`) | ✅ Supported | ✅ (`E0`) |
+| **CJ1G / CJ1H** | `CPU42..45`, `CPU64..67` | 0 - 6143 | D0 - D32767 | W0 - W511 | H0 - H511 | 4096 (`T/C 0-4095`) | ✅ Supported | ✅ (`E0..E12`) |
+| **CJ2M / CJ2H** | `CPU11..35`, `CPU64..68-EIP` | 0 - 6143 | D0 - D32767 | W0 - W511 | H0 - H1535 | 4096 (`T/C 0-4095`) | ✅ Supported | ✅ (`E0..E24`) |
+| **CS1G / H / D**| `CPU42..45`, `CPU63..68` | 0 - 6143 | D0 - D32767 | W0 - W511 | H0 - H511 | 4096 (`T/C 0-4095`) | ✅ Supported | ✅ (`E0..E12`) |
+| **CPM1A / 2A** | `CPM1`, `CPM1A`, `CPM2A/2C` | 0 - 255 | DM0 - DM6655 | — | HR0 - HR19 | 128 / 256 | ❌ (BCD Only) | ❌ |
+| **CQM1H / C200H**| `CQM1H`, `C200HS/HE/HG/HX` | 0 - 511 | DM0 - DM6655 | — | HR0 - HR99 | 512 (`T/C 0-511`) | ❌ (BCD Only) | ✅ (`E0..E2`) |
+| **NSJ / FQM1 / CV**| `NSJ-G5D`, `FQM1`, `CVM1-V2` | 0 - 6143 | D0 - D32767 | W0 - W511 | H0 - H511 | 1024 - 4096 | ✅ / ❌ | ✅ |
+
+---
+
+## 🤝 Acknowledgments & Lineage
+
+This project is built upon the open-source work of the community:
+
+- **Original Foundation & Core Concepts:**  
+  Created by [**BlackUppsss**](https://github.com/BlackUppsss) ([BlackUppsss/Cx-Proggrammer-MCP](https://github.com/BlackUppsss/Cx-Proggrammer-MCP)).  
+  *Original contributions include:* CP1E AST engine, PKWARE DCL decompression/compression codec, and foundational MCP tools.
+
+- **Fork Enhancements & Maintenance:**  
+  Maintained by [**Rico Allif Lazzami**](https://github.com/ricolazzami).  
+  *Added capabilities:* Multi-model architecture support (CP1L, CP1H, CP2E, CJ2M), Zero-Kill safe commit workflow, visual error detection & auto-revision (red rail scanner), live typing automation, and standalone vector diagram rendering.
+
+If you find this MCP server useful, please consider starring both this repository and the [original upstream project](https://github.com/BlackUppsss/Cx-Proggrammer-MCP)!
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. It preserves all original credits and licenses of upstream components.

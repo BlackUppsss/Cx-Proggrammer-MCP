@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -37,15 +38,21 @@ def create_server(project_path: str | Path, allow_write: bool = False, auto_relo
         types.Tool(name="search_project", description="Search mnemonic, address, symbol, or comment, optionally by section and result type.", inputSchema=schema({"query": {"type": "string", "minLength": 1}, "section": {"type": "string"}, "result_type": {"type": "string", "enum": ["all", "rung", "symbol"]}}, ["query"])),
         types.Tool(name="analyze_project", description="Detect potential comment/logic mismatches, references, conflicting output writers, and unreset SETs.", inputSchema=schema({"section": {"type": "string"}})),
         types.Tool(name="validate_project", description="Validate project structure and available PLC constraints.", inputSchema=schema({})),
+        types.Tool(name="get_hardware_profile", description="Get detected Omron PLC model, CPU type, memory boundaries, and capabilities.", inputSchema=schema({})),
+        types.Tool(name="simulate_scan", description="Simulate execution of ladder logic for N scan cycles with given inputs.", inputSchema=schema({"section": {"type": "string"}, "inputs": {"type": "object"}, "scans": {"type": "integer", "minimum": 1}}, ["section"])),
         types.Tool(name="replace_rung", description="Replace a rung (requires --allow-write). Unsaved until commit_project.", inputSchema=schema({"section": {"type": "string"}, "index": {"type": "integer", "minimum": 0}, "instructions": {"type": "array", "items": {"type": "string"}}, "comment": {"type": "string"}}, ["section", "index", "instructions"])),
         types.Tool(name="insert_rung", description="Insert a rung (requires --allow-write). Unsaved until commit_project.", inputSchema=schema({"section": {"type": "string"}, "index": {"type": "integer", "minimum": 0}, "instructions": {"type": "array", "items": {"type": "string"}}, "comment": {"type": "string"}}, ["section", "index", "instructions"])),
         types.Tool(name="delete_rung", description="Delete a rung (requires --allow-write). Unsaved until commit_project.", inputSchema=schema({"section": {"type": "string"}, "index": {"type": "integer", "minimum": 0}}, ["section", "index"])),
         types.Tool(name="set_symbol", description="Add or update a symbol (requires --allow-write). Unsaved until commit_project.", inputSchema=schema({"address": {"type": "string"}, "name": {"type": "string"}, "data_type": {"type": "string"}, "comment": {"type": "string"}}, ["address", "name"])),
+        types.Tool(name="delete_symbol", description="Delete a symbol by address or name (requires --allow-write). Unsaved until commit_project.", inputSchema=schema({"address_or_name": {"type": "string"}}, ["address_or_name"])),
         types.Tool(name="commit_project", description="Validate and save CXT/CXP pair with backup & optional CX-Programmer GUI reload (requires --allow-write).", inputSchema=schema({"backup": {"type": "boolean"}, "reload_cxp": {"type": "boolean"}})),
         types.Tool(name="open_in_cxp", description="Open active .cxp/.cxt project file in CX-Programmer Windows GUI.", inputSchema=schema({})),
         types.Tool(name="add_section", description="Add a new ladder section before a specific section (requires --allow-write).", inputSchema=schema({"section_name": {"type": "string"}, "before_section": {"type": "string"}}, ["section_name"])),
         types.Tool(name="rename_section", description="Rename a ladder section (requires --allow-write).", inputSchema=schema({"old_name": {"type": "string"}, "new_name": {"type": "string"}}, ["old_name", "new_name"])),
-        types.Tool(name="create_project", description="Create new .cxt and .cxp project files from CP1E template (requires --allow-write).", inputSchema=schema({"target_path": {"type": "string"}, "template": {"type": "string"}}, ["template"])),
+        types.Tool(name="create_project", description="Create new .cxt and .cxp project files from CP1E template (requires --allow-write).", inputSchema=schema({"target_path": {"type": "string"}, "template": {"type": "string"}}, ["target_path"])),
+        types.Tool(name="take_screenshot", description="Capture a screenshot of CX-Programmer window for visual verification, checking for ladder syntax errors (red rail) and auto-revising them if requested.", inputSchema=schema({"output_path": {"type": "string"}, "auto_launch": {"type": "boolean"}, "check_errors": {"type": "boolean"}, "auto_revise": {"type": "boolean"}}, [])),
+        types.Tool(name="verify_and_revise", description="Analyze CX-Programmer diagram screenshot for syntax errors (red rails or error dialogs) and immediately execute live revisions/undo to fix them.", inputSchema=schema({"output_path": {"type": "string"}, "auto_revise": {"type": "boolean"}}, [])),
+        types.Tool(name="live_type_rung", description="Visually type ladder instructions directly into the active CX-Programmer window using shortcuts (C, /, O, I) with visible pacing.", inputSchema=schema({"instructions": {"type": "array", "items": {"type": "string"}}, "insert_new_rung": {"type": "boolean"}, "comment": {"type": "string"}, "typing_speed": {"type": "number"}}, ["instructions"])),
     ]
 
     async def list_tools(_ctx: Any = None, _params: Any = None) -> types.ListToolsResult:
@@ -63,7 +70,29 @@ def create_server(project_path: str | Path, allow_write: bool = False, auto_relo
             elif name == "search_project": result = project.search(arguments["query"], arguments.get("section"), arguments.get("result_type", "all"))
             elif name == "analyze_project": result = project.analyze(arguments.get("section"))
             elif name == "validate_project": result = project.validate()
-            elif name in {"replace_rung", "insert_rung", "delete_rung", "set_symbol", "commit_project", "create_project", "open_in_cxp", "add_section", "rename_section"}:
+            elif name == "get_hardware_profile": result = project.get_hardware_profile()
+            elif name == "simulate_scan": result = project.simulate_scan(arguments["section"], arguments.get("inputs"), arguments.get("scans", 1))
+            elif name == "take_screenshot":
+                result = project.capture_screenshot(
+                    output_path=arguments.get("output_path"),
+                    auto_launch=arguments.get("auto_launch", True),
+                    check_errors=arguments.get("check_errors", True),
+                    auto_revise=arguments.get("auto_revise", True),
+                )
+            elif name == "verify_and_revise":
+                result = project.verify_and_revise(
+                    output_path=arguments.get("output_path"),
+                    auto_revise=arguments.get("auto_revise", True),
+                )
+            elif name == "live_type_rung":
+                from live_typer import live_type_ladder
+                result = live_type_ladder(
+                    instructions=arguments["instructions"],
+                    insert_new_rung=arguments.get("insert_new_rung", True),
+                    comment=arguments.get("comment", ""),
+                    typing_speed=float(arguments.get("typing_speed", 0.10)),
+                )
+            elif name in {"replace_rung", "insert_rung", "delete_rung", "set_symbol", "delete_symbol", "commit_project", "create_project", "open_in_cxp", "add_section", "rename_section"}:
                 if not allow_write:
                     raise PermissionError("Penulisan dinonaktifkan. Jalankan server dengan --allow-write setelah memastikan backup.")
                 if name == "replace_rung":
@@ -78,8 +107,11 @@ def create_server(project_path: str | Path, allow_write: bool = False, auto_relo
                     project.rename_section(arguments["old_name"], arguments["new_name"]); result = {"ok": True, "saved": False}
                 elif name == "set_symbol":
                     result = project.set_symbol(arguments["address"], arguments["name"], arguments.get("data_type", "BOOL"), arguments.get("comment", "")); result["saved"] = False
+                elif name == "delete_symbol":
+                    ok = project.delete_symbol(arguments["address_or_name"])
+                    result = {"ok": ok, "saved": False}
                 elif name == "commit_project":
-                    result = project.commit(arguments.get("backup", True), reload_cxp=arguments.get("reload_cxp", None))
+                    result = project.commit(arguments.get("backup", True))
                 elif name == "open_in_cxp":
                     from api import open_cx_programmer
                     reopened = open_cx_programmer(project.cxp_path, custom_exe=project.cxp_exe_path)

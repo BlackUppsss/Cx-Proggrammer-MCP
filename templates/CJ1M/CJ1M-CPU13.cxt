@@ -1,0 +1,173 @@
+CXProgVer:="1.5";
+WrittenByCXPVersion:="9.73";
+FileType:=1;
+Created:="5 10 2026 4 20 31";
+Modified:="5 10 2026 4 21 52";
+Name:="NewProject";
+Core:=
+BEGIN
+ CDMPath:="";
+END;
+ResourceCount:=1;
+Resource[0]:=
+BEGIN
+ Name:="NewResource1";
+ FBMemory:=
+ BEGIN
+  BR[0]:=",0";
+  BR[1]:=",0";
+  BR[3]:=",0";
+  BR[4]:=",0";
+  NumRegisters:=5;
+ END;
+ SFCMemory:=
+ BEGIN
+  BR[0]:=",-1";
+  BR[1]:=",-1";
+  NumRegisters:=2;
+ END;
+ PLC:=
+ BEGIN
+  Name:="new_program";
+  Config:="[DEV]DEV:CJ1M;CLOCK:TRUE;CPU:CPU13;EM:E,0,32768,WORD,RW,1,RAM;GATE:TRUE;REMOTE:TRUE;UM:UM,0,22528,WORD,RW,1,RAM;[DRVR]DETECT:1;PORT:COM1,9600,None,8,1;[NET]FRAME:1004;NET:SPMA;TMO:2000;";
+  ProgramCheckOptions:=
+  BEGIN
+   CheckLevel:=0;
+   DuplicatedOutputBit:=true;
+   DuplicatedOutputWord:=true;
+   DuplicatedTIMCNT:=true;
+   BlockProgram:=false;
+   Subroutine:=true;
+   JMPJME:=true;
+   FORNEXT:=true;
+   STEPSNXT:=true;
+   ILILC:=true;
+   IFIEND:=true;
+   LOOPLEND:=true;
+   Stack:=true;
+   FALFALS:=true;
+   Marks:=true;
+   NoFuncCheck:=false;
+   Writetoarray:=false;
+   FORNEXT2:=false;
+  END;
+ END;
+ GlobalVariables:=
+ BEGIN
+  VariableList:=
+  BEGIN_LIST_$#[1]
+  END_LIST_$#[1];
+  VariableCount:=0;
+  VariableMultiCommentList:=
+  BEGIN_LIST_$#[2]
+  END_LIST_$#[2];
+  VariableMultiCommentCount:=0;
+  VariableMultiCommentTypeCount:=16;
+  VariablePredefinedMultiCommentList:=
+  BEGIN_LIST_$#[3]
+  END_LIST_$#[3];
+  VariablePredefinedMultiCommentCount:=0;
+  POUInstances:=
+  BEGIN
+   NumInstances:=0;
+  END;
+ END;
+ FunctionBlocks:=
+ BEGIN
+ END;
+ Programs:=
+ BEGIN
+  Program[0]:=
+  BEGIN
+   CompileInline:=0;
+   Name:="NewProgram1";
+   FileType:=2;
+   Created:="5 10 2026 4 21 2";
+   Modified:="5 10 2026 4 21 52";
+   Protection:=
+   BEGIN
+    Enabled:=0;
+   END;
+   LocalVariables:=
+   BEGIN
+    VariableList:=
+    BEGIN_LIST_$#[4]
+    END_LIST_$#[4];
+    VariableCount:=0;
+    VariableMultiCommentList:=
+    BEGIN_LIST_$#[5]
+    END_LIST_$#[5];
+    VariableMultiCommentCount:=0;
+    VariableMultiCommentTypeCount:=16;
+    POUInstances:=
+    BEGIN
+     NumInstances:=0;
+    END;
+   END;
+   TaskID:=256;
+   OpStart:=1;
+   Sections:=
+   BEGIN
+    SC:=2;
+    Sec[0]:=
+    BEGIN
+     IEC1131Type:=11;
+     CompileInline:=0;
+     SecType:=0;
+     SecName:="Section1";
+     ProgramData:=
+     BEGIN
+      RC:=1;
+      R[0]:=
+      BEGIN
+       Com:="";
+       Flags:="1,0";
+       FBversion:="";
+       SL:="";
+       AtchCmts:=
+       BEGIN
+        CC:=0;
+       END;
+      END;
+     END;
+    END;
+    Sec[1]:=
+    BEGIN
+     IEC1131Type:=11;
+     CompileInline:=0;
+     SecType:=0;
+     SecName:="END";
+     ProgramData:=
+     BEGIN
+      RC:=2;
+      R[0]:=
+      BEGIN
+       Com:="";
+       Flags:="1,0";
+       FBversion:="";
+       SL:=
+$?St$Bk?_#[6]
+END(001)
+$?St$Bk?_#[6]
+       AtchCmts:=
+       BEGIN
+        CC:=0;
+       END;
+      END;
+      R[1]:=
+      BEGIN
+       Com:="";
+       Flags:="1,0";
+       FBversion:="";
+       SL:="";
+       AtchCmts:=
+       BEGIN
+        CC:=0;
+       END;
+      END;
+     END;
+    END;
+   END;
+  END;
+ END;
+END;

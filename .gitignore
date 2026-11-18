@@ -2,3 +2,8 @@ __pycache__/
 *.pyc
 *.bak
 *.tmp
+.venv/
+venv/
+.env
+.env.*
+*.log
