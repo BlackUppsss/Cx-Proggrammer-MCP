@@ -32,7 +32,7 @@ def cmd_summary(args):
 
 def cmd_rungs(args):
     p, _ = get_project(args.file)
-    prog = args.program or "NewProgram1"
+    prog = args.program or p.program_name
     if prog != p.program_name:
         raise ValueError(f"Program not found: {prog}")
     page = p.list_rungs(args.section, mode="full")
@@ -98,7 +98,7 @@ def main():
     # Rungs
     p_rng = sub.add_parser("rungs", help="View section rungs")
     p_rng.add_argument("section", help="Section name (e.g. TrafficLight)")
-    p_rng.add_argument("-p", "--program", help="Program name", default="NewProgram1")
+    p_rng.add_argument("-p", "--program", help="Program name", default=None)
     p_rng.add_argument("-s", "--start", type=int, help="Start rung index", default=0)
     p_rng.add_argument("-e", "--end", type=int, help="End rung index (exclusive)", default=None)
     p_rng.set_defaults(func=cmd_rungs)
